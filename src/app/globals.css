@@ -232,3 +232,416 @@
 .mf-table tbody tr:nth-child(even):hover td {
   background: color-mix(in oklab, var(--surface-muted) 65%, transparent);
 }
+
+/* ── Hospital invoice document (screen + print) ─────────────────────── */
+
+.invoice-print-sheet {
+  background: #fff;
+  color: #0f172a;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1.5rem 1.75rem 1.75rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.invoice-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #0b1628;
+}
+
+.invoice-brand {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 34rem;
+}
+
+.invoice-logo {
+  border-radius: 0.65rem;
+  flex-shrink: 0;
+}
+
+.invoice-hospital-name {
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: #0b1628;
+}
+
+.invoice-hospital-meta,
+.invoice-hospital-code,
+.invoice-muted {
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.invoice-hospital-code {
+  margin-top: 0.15rem;
+}
+
+.invoice-title-block {
+  text-align: right;
+  min-width: 10rem;
+}
+
+.invoice-doc-type {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #0891b2;
+}
+
+.invoice-number {
+  margin-top: 0.2rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0b1628;
+}
+
+.invoice-status-pill {
+  display: inline-block;
+  margin-top: 0.45rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: #ecfeff;
+  color: #0e7490;
+  border: 1px solid #a5f3fc;
+}
+
+.invoice-status-pill[data-status="paid"] {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.invoice-status-pill[data-status="partially_paid"] {
+  background: #fffbeb;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.invoice-status-pill[data-status="cancelled"] {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.invoice-meta-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: 1fr;
+  margin: 1.15rem 0 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .invoice-meta-grid {
+    grid-template-columns: 1.2fr 1fr;
+  }
+}
+
+.invoice-section-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 0.35rem;
+}
+
+.invoice-patient-name {
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: #0b1628;
+  margin-bottom: 0.35rem;
+}
+
+.invoice-dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.2rem 0.75rem;
+  font-size: 0.82rem;
+}
+
+.invoice-dl dt {
+  color: #64748b;
+}
+
+.invoice-dl dd {
+  color: #0f172a;
+}
+
+.invoice-dl-span {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.2rem 0.75rem;
+}
+
+.invoice-items,
+.invoice-payments-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.invoice-items th,
+.invoice-payments-table th {
+  text-align: left;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #475569;
+  background: #f1f5f9;
+  border-top: 1px solid #cbd5e1;
+  border-bottom: 1px solid #cbd5e1;
+  padding: 0.55rem 0.5rem;
+}
+
+.invoice-items td,
+.invoice-payments-table td {
+  padding: 0.55rem 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: top;
+}
+
+.invoice-items .col-no {
+  width: 2.2rem;
+  color: #64748b;
+}
+
+.invoice-items .col-num,
+.invoice-payments-table .col-num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.invoice-items .col-desc {
+  width: 42%;
+}
+
+.invoice-totals-wrap {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .invoice-totals-wrap {
+    grid-template-columns: 1.2fr 0.9fr;
+    align-items: start;
+  }
+}
+
+.invoice-words {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #334155;
+}
+
+.invoice-words .mt-3 {
+  margin-top: 0.75rem;
+}
+
+.invoice-totals {
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  background: #f8fafc;
+}
+
+.invoice-totals > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.82rem;
+  padding: 0.28rem 0;
+}
+
+.invoice-totals dt {
+  color: #64748b;
+}
+
+.invoice-totals dd {
+  font-variant-numeric: tabular-nums;
+  font-weight: 550;
+}
+
+.invoice-total-row {
+  border-top: 1px solid #cbd5e1;
+  margin-top: 0.2rem;
+  padding-top: 0.45rem !important;
+  font-weight: 700;
+}
+
+.invoice-total-row dt,
+.invoice-total-row dd {
+  color: #0b1628;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.invoice-balance-row dt,
+.invoice-balance-row dd {
+  color: #0e7490;
+  font-weight: 700;
+}
+
+.invoice-payments {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.invoice-footer {
+  margin-top: 1.75rem;
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: 1fr 1fr;
+}
+
+.invoice-sign {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.invoice-sign-line {
+  height: 2.75rem;
+  border-bottom: 1px solid #94a3b8;
+  margin-bottom: 0.4rem;
+}
+
+.invoice-disclaimer {
+  grid-column: 1 / -1;
+  font-size: 0.68rem;
+  color: #94a3b8;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.dark .invoice-print-sheet {
+  background: var(--surface);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+
+.dark .invoice-hospital-name,
+.dark .invoice-number,
+.dark .invoice-patient-name,
+.dark .invoice-total-row dt,
+.dark .invoice-total-row dd {
+  color: var(--foreground);
+}
+
+.dark .invoice-header {
+  border-bottom-color: color-mix(in oklab, var(--foreground) 55%, transparent);
+}
+
+.dark .invoice-items th,
+.dark .invoice-payments-table th {
+  background: var(--surface-muted);
+  color: var(--muted);
+  border-color: var(--border);
+}
+
+.dark .invoice-items td,
+.dark .invoice-payments-table td,
+.dark .invoice-payments {
+  border-color: var(--border);
+}
+
+.dark .invoice-totals {
+  background: var(--surface-muted);
+  border-color: var(--border);
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm 12mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .app-mesh {
+    background: #fff !important;
+  }
+
+  .invoice-print-sheet {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    max-width: none !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .invoice-hospital-name,
+  .invoice-number,
+  .invoice-patient-name,
+  .invoice-dl dd,
+  .invoice-words,
+  .invoice-items td,
+  .invoice-payments-table td {
+    color: #000 !important;
+  }
+
+  .invoice-doc-type,
+  .invoice-balance-row dt,
+  .invoice-balance-row dd {
+    color: #0b1628 !important;
+  }
+
+  .invoice-status-pill {
+    border: 1px solid #000 !important;
+    background: transparent !important;
+    color: #000 !important;
+  }
+
+  .invoice-items th,
+  .invoice-payments-table th,
+  .invoice-totals {
+    background: #f3f4f6 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .invoice-footer {
+    break-inside: avoid;
+  }
+
+  .invoice-items,
+  .invoice-payments-table {
+    break-inside: auto;
+  }
+
+  .invoice-items tr,
+  .invoice-payments-table tr {
+    break-inside: avoid;
+  }
+}

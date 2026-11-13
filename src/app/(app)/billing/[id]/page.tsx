@@ -1,15 +1,18 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connectDB } from "@/lib/db";
-import { Invoice, Payment } from "@/models";
+import { Hospital, Invoice, Payment } from "@/models";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TableScroll } from "@/components/ui/data-table";
-import { StatusBadge } from "@/components/status-badge";
+import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { hasPermission, type Role } from "@/lib/permissions";
 import { requirePagePermission } from "@/lib/page-auth";
 import { CollectPaymentForm } from "./collect-payment-form";
 import { DeleteButton } from "@/components/delete-button";
+import { PrintButton } from "@/components/billing/print-button";
+import { InvoiceDocument } from "@/components/billing/invoice-document";
+import { ArrowLeft } from "lucide-react";
 
 export default async function InvoiceDetailPage({
   params,
@@ -20,13 +23,20 @@ export default async function InvoiceDetailPage({
   const { id } = await params;
   await connectDB();
 
-  const invoice = await Invoice.findOne({
-    _id: id,
-    hospitalId: session.user.hospitalId,
-  })
-    .populate("patientId", "uhid firstName lastName phone")
-    .lean();
-  if (!invoice) notFound();
+  const [invoice, hospital] = await Promise.all([
+    Invoice.findOne({
+      _id: id,
+      hospitalId: session.user.hospitalId,
+    })
+      .populate(
+        "patientId",
+        "uhid firstName lastName phone gender address city state pincode"
+      )
+      .lean(),
+    Hospital.findById(session.user.hospitalId).lean(),
+  ]);
+
+  if (!invoice || !hospital) notFound();
 
   const payments = await Payment.find({ invoiceId: id }).sort({ paidAt: -1 }).lean();
   const canWrite = hasPermission(session.user.role as Role, "billing:write");
@@ -34,92 +44,126 @@ export default async function InvoiceDetailPage({
     firstName: string;
     lastName: string;
     uhid: string;
-    phone: string;
+    phone?: string;
+    gender?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
   };
+  const currency = hospital.currency || "INR";
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <PageHeader
-          title={invoice.invoiceNumber}
-          description={`${patient.firstName} ${patient.lastName} · ${patient.uhid}`}
-        />
-        {canWrite && (
-          <DeleteButton
-            endpoint={`/api/invoices/${id}`}
-            label="Delete invoice"
-            confirmMessage="Permanently delete this invoice and its payments from the database?"
-            redirectTo="/billing"
-            variant="danger"
+      <div className="no-print mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-2">
+          <Button asChild variant="ghost" size="sm" className="-ml-2">
+            <Link href="/billing">
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Back to billing
+            </Link>
+          </Button>
+          <PageHeader
+            title={invoice.invoiceNumber}
+            description={`${patient.firstName} ${patient.lastName} · ${patient.uhid} · Print-ready hospital bill`}
           />
-        )}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <PrintButton />
+          {canWrite && (
+            <DeleteButton
+              endpoint={`/api/invoices/${id}`}
+              label="Delete invoice"
+              confirmMessage="Permanently delete this invoice and its payments from the database?"
+              redirectTo="/billing"
+              variant="danger"
+            />
+          )}
+        </div>
       </div>
 
-      <div className="mb-4">
-        <StatusBadge status={invoice.status} />
-      </div>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(18rem,0.85fr)]">
+        <InvoiceDocument
+          hospital={{
+            name: hospital.name,
+            code: hospital.code,
+            address: hospital.address,
+            phone: hospital.phone,
+            email: hospital.email,
+            currency,
+          }}
+          patient={patient}
+          invoice={{
+            invoiceNumber: invoice.invoiceNumber,
+            status: invoice.status,
+            issuedAt: invoice.issuedAt,
+            createdAt: invoice.createdAt,
+            items: invoice.items.map(
+              (item: {
+                description: string;
+                quantity: number;
+                unitPrice: number;
+                taxPercent: number;
+                amount: number;
+              }) => ({
+                description: item.description,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                taxPercent: item.taxPercent,
+                amount: item.amount,
+              })
+            ),
+            subtotal: invoice.subtotal,
+            taxTotal: invoice.taxTotal,
+            discount: invoice.discount,
+            total: invoice.total,
+            amountPaid: invoice.amountPaid,
+            balance: invoice.balance,
+            notes: invoice.notes,
+          }}
+          payments={payments.map((p) => ({
+            _id: String(p._id),
+            receiptNumber: p.receiptNumber,
+            amount: p.amount,
+            method: p.method,
+            reference: p.reference,
+            paidAt: p.paidAt,
+          }))}
+        />
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Line items</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-          <TableScroll className="border-0 shadow-none rounded-none">
-              <thead>
-                <tr>
-                  <th>Description</th>
-                  <th>Qty</th>
-                  <th>Unit</th>
-                  <th>Tax %</th>
-                  <th>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoice.items.map((item: (typeof invoice.items)[number], idx: number) => (
-                  <tr key={idx}>
-                    <td>{item.description}</td>
-                    <td>{item.quantity}</td>
-                    <td>{formatCurrency(item.unitPrice)}</td>
-                    <td>{item.taxPercent}</td>
-                    <td>{formatCurrency(item.amount)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </TableScroll>
-            <div className="space-y-1 p-5 text-sm">
-              <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span>{formatCurrency(invoice.subtotal)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Tax</span>
-                <span>{formatCurrency(invoice.taxTotal)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Discount</span>
-                <span>{formatCurrency(invoice.discount)}</span>
-              </div>
-              <div className="flex justify-between text-base font-semibold">
-                <span>Total</span>
-                <span>{formatCurrency(invoice.total)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Paid</span>
-                <span>{formatCurrency(invoice.amountPaid)}</span>
-              </div>
-              <div className="flex justify-between font-semibold text-[var(--brand-teal)]">
-                <span>Balance</span>
-                <span>{formatCurrency(invoice.balance)}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="space-y-4">
+        <div className="no-print space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Payments / receipts</CardTitle>
+              <CardTitle>Billing desk</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex justify-between gap-3">
+                <span className="text-[var(--muted)]">Grand total</span>
+                <span className="font-semibold">
+                  {formatCurrency(invoice.total, currency)}
+                </span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-[var(--muted)]">Paid</span>
+                <span>{formatCurrency(invoice.amountPaid, currency)}</span>
+              </div>
+              <div className="flex justify-between gap-3 border-t border-[var(--border)] pt-3">
+                <span className="font-medium">Balance due</span>
+                <span className="font-semibold text-[var(--brand-teal)]">
+                  {formatCurrency(invoice.balance, currency)}
+                </span>
+              </div>
+              <PrintButton label="Print / save as PDF" />
+              <p className="text-xs text-[var(--muted)]">
+                Use your browser print dialog to print on A4 or save as PDF for
+                patient records.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent receipts</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               {payments.map((p) => (
@@ -129,15 +173,15 @@ export default async function InvoiceDetailPage({
                 >
                   <div className="flex justify-between font-medium">
                     <span>{p.receiptNumber}</span>
-                    <span>{formatCurrency(p.amount)}</span>
+                    <span>{formatCurrency(p.amount, currency)}</span>
                   </div>
-                  <p className="text-slate-500">
+                  <p className="text-[var(--muted)]">
                     {p.method.toUpperCase()} · {formatDateTime(p.paidAt)}
                   </p>
                 </div>
               ))}
               {payments.length === 0 && (
-                <p className="text-slate-500">No payments yet</p>
+                <p className="text-[var(--muted)]">No payments yet</p>
               )}
             </CardContent>
           </Card>

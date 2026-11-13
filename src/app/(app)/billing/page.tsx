@@ -40,7 +40,7 @@ export default async function BillingPage() {
     <div>
       <PageHeader
         title="Billing & Payments"
-        description="Service catalogue invoices, receipts and outstanding balances"
+        description="Hospital invoices, receipts and balances — open any bill to print or save as PDF"
         action={
           canWrite ? { href: "/billing/new", label: "Create invoice" } : undefined
         }

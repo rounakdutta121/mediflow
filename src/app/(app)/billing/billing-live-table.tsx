@@ -77,7 +77,7 @@ export function BillingLiveTable({ initialRows }: { initialRows: InvoiceRow[] })
               </td>
               <td>
                 <Button asChild size="sm" variant="ghost">
-                  <Link href={`/billing/${inv._id}`}>Open</Link>
+                  <Link href={`/billing/${inv._id}`}>View / print</Link>
                 </Button>
               </td>
             </tr>
