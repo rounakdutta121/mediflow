@@ -20,6 +20,7 @@ import {
   Building2,
   UserCog,
   BarChart3,
+  CircleHelp,
   ChevronLeft,
   ChevronRight,
   Menu,
@@ -51,6 +52,7 @@ const mainNav: NavItem[] = [
   { href: "/reports", label: "Reports", icon: BarChart3, permission: "reports:view" },
   { href: "/audit", label: "Audit", icon: Shield, permission: "audit:view" },
   { href: "/settings", label: "Settings", icon: Settings, permission: "settings:manage" },
+  { href: "/help", label: "Help", icon: CircleHelp, permission: "dashboard:view" },
 ];
 
 const laterNav: NavItem[] = [
