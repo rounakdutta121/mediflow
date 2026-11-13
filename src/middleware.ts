@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const publicPaths = ["/login", "/api/auth"];
+const publicPaths = ["/login", "/api/auth", "/api/health"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -16,10 +16,18 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = await getToken({
-    req,
-    secret: process.env.AUTH_SECRET,
-  });
+  // Prefer Auth.js cookie names used in production (__Secure-*) and development.
+  const token =
+    (await getToken({
+      req,
+      secret: process.env.AUTH_SECRET,
+      secureCookie: true,
+    })) ||
+    (await getToken({
+      req,
+      secret: process.env.AUTH_SECRET,
+      secureCookie: false,
+    }));
 
   if (!token) {
     if (pathname.startsWith("/api/")) {

@@ -34,6 +34,8 @@ declare module "next-auth/jwt" {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  secret: process.env.AUTH_SECRET,
+  trustHost: true,
   providers: [
     Credentials({
       name: "credentials",
@@ -46,20 +48,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const password = credentials?.password as string | undefined;
         if (!email || !password) return null;
 
-        await connectDB();
-        const user = await User.findOne({ email: email.toLowerCase(), isActive: true });
-        if (!user) return null;
+        try {
+          await connectDB();
+          const user = await User.findOne({
+            email: email.toLowerCase(),
+            isActive: true,
+          });
+          if (!user) return null;
 
-        const valid = await bcrypt.compare(password, user.passwordHash);
-        if (!valid) return null;
+          const valid = await bcrypt.compare(password, user.passwordHash);
+          if (!valid) return null;
 
-        return {
-          id: user._id.toString(),
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          hospitalId: user.hospitalId.toString(),
-        };
+          return {
+            id: user._id.toString(),
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            hospitalId: user.hospitalId.toString(),
+          };
+        } catch (error) {
+          console.error("[auth] authorize failed", error);
+          return null;
+        }
       },
     }),
   ],
@@ -85,5 +95,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
   },
-  trustHost: true,
 });

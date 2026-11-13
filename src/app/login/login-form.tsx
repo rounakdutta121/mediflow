@@ -31,7 +31,18 @@ export function LoginForm() {
     });
     setLoading(false);
     if (res?.error) {
-      setError("Invalid email or password");
+      const code = String(res.error);
+      if (code === "Configuration") {
+        setError(
+          "Server auth is misconfigured. On Vercel set AUTH_SECRET, MONGODB_URI, and AUTH_TRUST_HOST=true. Do not leave AUTH_URL as localhost."
+        );
+      } else if (code === "CredentialsSignin") {
+        setError(
+          "Invalid email or password. If this is a fresh Vercel deploy, run npm run seed against the same Atlas database."
+        );
+      } else {
+        setError(`Sign-in failed (${code}). Check Vercel env vars and seed data.`);
+      }
       return;
     }
     router.push(searchParams.get("callbackUrl") || "/dashboard");

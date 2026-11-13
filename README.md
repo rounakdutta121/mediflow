@@ -63,19 +63,23 @@ Open [http://localhost:3000](http://localhost:3000).
 
 1. Create a MongoDB Atlas cluster and database user; whitelist `0.0.0.0/0` (or Vercel IPs).
 2. Push this repo to GitHub and import the project in Vercel.
-3. Set environment variables:
+3. Set environment variables for **Production** (and Preview if needed):
 
 | Variable | Value |
 |----------|-------|
 | `MONGODB_URI` | Atlas connection string |
-| `AUTH_SECRET` | `openssl rand -base64 32` |
-| `AUTH_URL` | Your Vercel URL (e.g. `https://mediflow.vercel.app`) |
+| `AUTH_SECRET` | `openssl rand -base64 32` (required) |
+| `AUTH_TRUST_HOST` | `true` |
+| `AUTH_URL` | **Optional.** If set, must be exactly your live URL (e.g. `https://mediflow.vercel.app`). Never leave it as `http://localhost:3000` on Vercel. |
 
-4. Deploy. After first deploy, run seed once against Atlas:
+4. In Vercel project settings, keep **System Environment Variables** enabled (so `VERCEL` is available).
+5. Deploy. After first deploy, seed Atlas once (users will not exist until you do):
 
 ```bash
 MONGODB_URI="your-atlas-uri" npm run seed
 ```
+
+6. Sanity check: open `https://your-app.vercel.app/api/health` — should show `ok: true` and `activeUsers` > 0.
 
 ## Scripts
 

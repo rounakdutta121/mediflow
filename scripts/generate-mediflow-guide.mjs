@@ -1,4 +1,5 @@
 import PDFDocument from "pdfkit";
+import { PDFDocument as PDFLib } from "pdf-lib";
 import fs from "fs";
 import path from "path";
 
@@ -6,7 +7,7 @@ const OUT_DIR = path.resolve("D:/hospitalcrm/docs");
 fs.mkdirSync(OUT_DIR, { recursive: true });
 const OUT = path.join(
   OUT_DIR,
-  process.env.PDF_NAME || "MediFlow-User-Guide.pdf"
+  process.env.PDF_NAME || "MediFlow-User-Guide-final.pdf"
 );
 
 const doc = new PDFDocument({
@@ -493,4 +494,18 @@ await new Promise((resolve, reject) => {
   stream.on("error", reject);
 });
 
-console.log("PDF written:", OUT);
+// Drop trailing blank pages PDFKit sometimes appends with bufferPages/footer.
+const raw = fs.readFileSync(OUT);
+const loaded = await PDFLib.load(raw);
+const keep = Math.min(4, loaded.getPageCount());
+if (loaded.getPageCount() > keep) {
+  const trimmed = await PDFLib.create();
+  const pages = await trimmed.copyPages(
+    loaded,
+    Array.from({ length: keep }, (_, i) => i)
+  );
+  pages.forEach((p) => trimmed.addPage(p));
+  fs.writeFileSync(OUT, await trimmed.save());
+}
+
+console.log("PDF written:", OUT, `(${keep} pages)`);
