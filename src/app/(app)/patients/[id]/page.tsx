@@ -59,7 +59,7 @@ export default async function PatientDetailPage({
             <DeleteButton
               endpoint={`/api/patients/${id}`}
               label="Delete patient"
-              confirmMessage="Deactivate this patient record?"
+              confirmMessage="Permanently delete this patient and all related appointments, queue tokens, encounters, prescriptions, invoices, and payments?"
               redirectTo="/patients"
               variant="danger"
             />

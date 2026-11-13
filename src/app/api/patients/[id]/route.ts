@@ -2,6 +2,7 @@ import { Patient } from "@/models";
 import { ApiError, jsonError, jsonOk, requireSession } from "@/lib/api";
 import { writeAudit } from "@/lib/audit";
 import { notify } from "@/lib/notifications";
+import { deletePatientCascade } from "@/lib/patient-cascade";
 
 export async function GET(
   _req: Request,
@@ -81,12 +82,14 @@ export async function DELETE(
     const session = await requireSession("patients:write");
     const { id } = await params;
 
-    const patient = await Patient.findOneAndUpdate(
-      { _id: id, hospitalId: session.user.hospitalId },
-      { $set: { isActive: false } },
-      { new: true }
-    );
-    if (!patient) throw new ApiError("Patient not found", 404);
+    const existing = await Patient.findOne({
+      _id: id,
+      hospitalId: session.user.hospitalId,
+    }).lean();
+    if (!existing) throw new ApiError("Patient not found", 404);
+
+    const cascade = await deletePatientCascade(id, session.user.hospitalId);
+    if (!cascade) throw new ApiError("Patient not found", 404);
 
     await writeAudit({
       hospitalId: session.user.hospitalId,
@@ -95,19 +98,28 @@ export async function DELETE(
       action: "delete",
       resource: "patient",
       resourceId: id,
+      details: {
+        cascade: {
+          appointments: cascade.appointments,
+          encounters: cascade.encounters,
+          prescriptions: cascade.prescriptions,
+          invoices: cascade.invoices,
+          payments: cascade.payments,
+        },
+      },
     });
 
     await notify({
       hospitalId: session.user.hospitalId,
-      title: "Patient deactivated",
-      message: `${patient.firstName} ${patient.lastName} (${patient.uhid})`,
+      title: "Patient deleted",
+      message: `${existing.firstName} ${existing.lastName} (${existing.uhid}) and related records were removed`,
       type: "patient",
       href: "/patients",
-      targetRoles: ["RECEPTIONIST"],
+      targetRoles: ["RECEPTIONIST", "ACCOUNTANT", "DOCTOR"],
       actorId: session.user.id,
     });
 
-    return jsonOk({ ok: true });
+    return jsonOk({ ok: true, cascade });
   } catch (error) {
     return jsonError(error);
   }

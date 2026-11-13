@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 export function DeleteButton({
   endpoint,
   label = "Delete",
-  confirmMessage = "Are you sure you want to delete this?",
+  confirmMessage = "Are you sure? This permanently deletes related records.",
   redirectTo,
   variant = "outline",
   size = "sm",

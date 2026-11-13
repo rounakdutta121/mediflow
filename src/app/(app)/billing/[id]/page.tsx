@@ -44,11 +44,12 @@ export default async function InvoiceDetailPage({
           title={invoice.invoiceNumber}
           description={`${patient.firstName} ${patient.lastName} · ${patient.uhid}`}
         />
-        {canWrite && invoice.status !== "cancelled" && (
+        {canWrite && (
           <DeleteButton
             endpoint={`/api/invoices/${id}`}
-            label="Cancel invoice"
-            confirmMessage="Cancel this invoice?"
+            label="Delete invoice"
+            confirmMessage="Permanently delete this invoice and its payments from the database?"
+            redirectTo="/billing"
             variant="danger"
           />
         )}
