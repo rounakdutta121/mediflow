@@ -20,6 +20,7 @@ type Service = {
   name: string;
   code: string;
   price: number;
+  taxPercent?: number;
 };
 
 type Prescription = {
@@ -96,6 +97,7 @@ export function EncounterWorkspace({
     instructions: "",
     serviceId: "",
     unitPrice: "",
+    taxPercent: "0",
   });
 
   const loadServices = useCallback(() => {
@@ -182,6 +184,7 @@ export function EncounterWorkspace({
             instructions: rx.instructions,
             serviceId: rx.serviceId || undefined,
             unitPrice: Number(rx.unitPrice || 0),
+            taxPercent: Number(rx.taxPercent || 0),
             quantity: 1,
           },
         ],
@@ -203,6 +206,7 @@ export function EncounterWorkspace({
       instructions: "",
       serviceId: "",
       unitPrice: "",
+      taxPercent: "0",
     });
     toast.success("Prescription signed");
     router.refresh();
@@ -283,6 +287,9 @@ export function EncounterWorkspace({
       ...prev,
       serviceId,
       unitPrice: service ? String(service.price) : prev.unitPrice,
+      taxPercent: service
+        ? String(service.taxPercent ?? 0)
+        : prev.taxPercent,
       medicineName: prev.medicineName || service?.name || "",
     }));
   }
@@ -614,6 +621,20 @@ export function EncounterWorkspace({
                       setRx((p) => ({ ...p, unitPrice: e.target.value }))
                     }
                     placeholder="Enter charge amount"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Tax %</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step="0.01"
+                    value={rx.taxPercent}
+                    onChange={(e) =>
+                      setRx((p) => ({ ...p, taxPercent: e.target.value }))
+                    }
+                    placeholder="e.g. 18"
                   />
                 </div>
                 <Button

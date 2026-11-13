@@ -24,9 +24,11 @@ export async function POST(req: Request) {
         quantity?: number;
         serviceId?: string;
         unitPrice?: number;
+        taxPercent?: number;
       }) => {
         const quantity = Number(item.quantity || 1);
         const unitPrice = Number(item.unitPrice || 0);
+        const taxPercent = Number(item.taxPercent || 0);
         return {
           medicineName: item.medicineName,
           dosage: item.dosage,
@@ -36,6 +38,7 @@ export async function POST(req: Request) {
           quantity,
           serviceId: item.serviceId || undefined,
           unitPrice,
+          taxPercent,
           amount: Math.round(quantity * unitPrice * 100) / 100,
         };
       }

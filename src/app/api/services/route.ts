@@ -20,8 +20,12 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const session = await requireSession("billing:write");
+    const session = await requireSession(["billing:write", "settings:manage"]);
     const body = await req.json();
+    const taxPercent = Number(body.taxPercent || 0);
+    if (!Number.isFinite(taxPercent) || taxPercent < 0 || taxPercent > 100) {
+      return jsonError(new Error("Tax % must be between 0 and 100"));
+    }
     const service = await Service.create({
       hospitalId: session.user.hospitalId,
       code: body.code,
@@ -29,7 +33,7 @@ export async function POST(req: Request) {
       category: body.category || "other",
       departmentId: body.departmentId,
       price: body.price,
-      taxPercent: body.taxPercent || 0,
+      taxPercent,
     });
 
     await writeAudit({
@@ -39,13 +43,17 @@ export async function POST(req: Request) {
       action: "create",
       resource: "service",
       resourceId: service._id.toString(),
-      details: { code: service.code, price: service.price },
+      details: {
+        code: service.code,
+        price: service.price,
+        taxPercent: service.taxPercent,
+      },
     });
 
     await notify({
       hospitalId: session.user.hospitalId,
       title: "Service catalog updated",
-      message: `${service.name} added at ${service.price}`,
+      message: `${service.name} added at ${service.price} (${service.taxPercent}% tax)`,
       type: "billing",
       href: "/settings",
       targetRoles: ["ACCOUNTANT", "RECEPTIONIST"],

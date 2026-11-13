@@ -9,6 +9,7 @@ export interface IPrescriptionItem {
   quantity?: number;
   serviceId?: mongoose.Types.ObjectId;
   unitPrice?: number;
+  taxPercent?: number;
   amount?: number;
 }
 
@@ -47,6 +48,7 @@ const PrescriptionSchema = new Schema<IPrescription>(
         quantity: { type: Number, default: 1 },
         serviceId: { type: Schema.Types.ObjectId, ref: "Service" },
         unitPrice: { type: Number, default: 0 },
+        taxPercent: { type: Number, default: 0 },
         amount: { type: Number, default: 0 },
       },
     ],

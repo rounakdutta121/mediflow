@@ -21,6 +21,14 @@ type Service = {
   taxPercent: number;
 };
 
+type LineItem = {
+  serviceId: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  taxPercent: number;
+};
+
 export function NewInvoiceForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -33,17 +41,13 @@ export function NewInvoiceForm() {
   const [services, setServices] = useState<Service[]>([]);
   const [serviceId, setServiceId] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [unitPrice, setUnitPrice] = useState("");
+  const [taxPercent, setTaxPercent] = useState("0");
   const [discount, setDiscount] = useState(0);
-  const [items, setItems] = useState<
-    {
-      serviceId: string;
-      description: string;
-      quantity: number;
-      unitPrice: number;
-      taxPercent: number;
-    }[]
-  >([]);
+  const [items, setItems] = useState<LineItem[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const selectedService = services.find((s) => s._id === serviceId);
 
   const loadCatalogs = useCallback(() => {
     Promise.all([
@@ -54,10 +58,16 @@ export function NewInvoiceForm() {
       setPatients(itemsList);
       setServices(s.items || []);
       setServiceId((prev) => {
-        if (prev && (s.items || []).some((item: Service) => item._id === prev)) {
-          return prev;
+        const next =
+          prev && (s.items || []).some((item: Service) => item._id === prev)
+            ? prev
+            : s.items?.[0]?._id || "";
+        const svc = (s.items || []).find((item: Service) => item._id === next);
+        if (svc) {
+          setUnitPrice(String(svc.price));
+          setTaxPercent(String(svc.taxPercent ?? 0));
         }
-        return s.items?.[0]?._id || "";
+        return next;
       });
       const fromQuery = searchParams.get("patientId") || "";
       if (
@@ -75,27 +85,58 @@ export function NewInvoiceForm() {
 
   useLiveReload(loadCatalogs);
 
-  const total = useMemo(() => {
-    const sub = items.reduce(
-      (sum, i) => sum + i.quantity * i.unitPrice * (1 + i.taxPercent / 100),
+  useEffect(() => {
+    if (!selectedService) return;
+    setUnitPrice(String(selectedService.price));
+    setTaxPercent(String(selectedService.taxPercent ?? 0));
+  }, [selectedService]);
+
+  const totals = useMemo(() => {
+    const subtotal = items.reduce(
+      (sum, i) => sum + i.quantity * i.unitPrice,
       0
     );
-    return Math.max(0, sub - discount);
+    const taxTotal = items.reduce(
+      (sum, i) => sum + i.quantity * i.unitPrice * (i.taxPercent / 100),
+      0
+    );
+    const total = Math.max(0, subtotal + taxTotal - discount);
+    return {
+      subtotal: Math.round(subtotal * 100) / 100,
+      taxTotal: Math.round(taxTotal * 100) / 100,
+      total: Math.round(total * 100) / 100,
+    };
   }, [items, discount]);
 
   function addItem() {
     const service = services.find((s) => s._id === serviceId);
     if (!service) return;
+    const price = Number(unitPrice);
+    const tax = Number(taxPercent || 0);
+    if (!Number.isFinite(price) || price < 0) {
+      toast.error("Enter a valid unit price");
+      return;
+    }
+    if (!Number.isFinite(tax) || tax < 0 || tax > 100) {
+      toast.error("Tax % must be between 0 and 100");
+      return;
+    }
     setItems((prev) => [
       ...prev,
       {
         serviceId: service._id,
         description: service.name,
-        quantity,
-        unitPrice: service.price,
-        taxPercent: service.taxPercent,
+        quantity: Math.max(1, quantity || 1),
+        unitPrice: price,
+        taxPercent: tax,
       },
     ]);
+  }
+
+  function updateItem(index: number, patch: Partial<LineItem>) {
+    setItems((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, ...patch } : item))
+    );
   }
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -129,10 +170,17 @@ export function NewInvoiceForm() {
 
   return (
     <div>
-      <PageHeader title="Create invoice" description="Bill OPD and service charges" />
+      <PageHeader
+        title="Create invoice"
+        description="Bill OPD and service charges — set tax % per line or use the service default"
+      />
       <Card>
         <CardContent className="space-y-6 p-6">
-          <form id="invoice-form" onSubmit={onSubmit} className="grid gap-4 md:grid-cols-2">
+          <form
+            id="invoice-form"
+            onSubmit={onSubmit}
+            className="grid gap-4 md:grid-cols-2"
+          >
             <div className="space-y-2 md:col-span-2">
               <Label>Patient</Label>
               <Select
@@ -165,13 +213,17 @@ export function NewInvoiceForm() {
           </form>
 
           <div className="rounded-lg border border-[var(--border)] p-4">
-            <div className="mb-3 grid gap-3 md:grid-cols-4">
+            <div className="mb-3 grid gap-3 md:grid-cols-6">
               <div className="md:col-span-2">
                 <Label>Service</Label>
-                <Select value={serviceId} onChange={(e) => setServiceId(e.target.value)}>
+                <Select
+                  value={serviceId}
+                  onChange={(e) => setServiceId(e.target.value)}
+                >
                   {services.map((s) => (
                     <option key={s._id} value={s._id}>
-                      {s.code} — {s.name} ({formatCurrency(s.price)})
+                      {s.code} — {s.name} ({formatCurrency(s.price)}
+                      {s.taxPercent ? ` · ${s.taxPercent}% tax` : ""})
                     </option>
                   ))}
                 </Select>
@@ -185,6 +237,28 @@ export function NewInvoiceForm() {
                   onChange={(e) => setQuantity(Number(e.target.value))}
                 />
               </div>
+              <div>
+                <Label>Unit price</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={unitPrice}
+                  onChange={(e) => setUnitPrice(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Tax %</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="0.01"
+                  value={taxPercent}
+                  onChange={(e) => setTaxPercent(e.target.value)}
+                  placeholder="0"
+                />
+              </div>
               <div className="flex items-end">
                 <Button type="button" variant="outline" onClick={addItem}>
                   Add item
@@ -192,42 +266,115 @@ export function NewInvoiceForm() {
               </div>
             </div>
 
-            <TableScroll maxHeight={280}>
+            <TableScroll maxHeight={320}>
               <thead>
                 <tr>
                   <th>Description</th>
                   <th>Qty</th>
                   <th>Price</th>
                   <th>Tax %</th>
+                  <th>Line total</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((item, idx) => (
-                  <tr key={idx}>
-                    <td>{item.description}</td>
-                    <td>{item.quantity}</td>
-                    <td>{formatCurrency(item.unitPrice)}</td>
-                    <td>{item.taxPercent}</td>
-                    <td>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() =>
-                          setItems((prev) => prev.filter((_, i) => i !== idx))
-                        }
-                      >
-                        Remove
-                      </Button>
+                {items.map((item, idx) => {
+                  const line =
+                    item.quantity *
+                    item.unitPrice *
+                    (1 + item.taxPercent / 100);
+                  return (
+                    <tr key={idx}>
+                      <td>{item.description}</td>
+                      <td>
+                        <Input
+                          type="number"
+                          min={1}
+                          className="h-8 w-20"
+                          value={item.quantity}
+                          onChange={(e) =>
+                            updateItem(idx, {
+                              quantity: Math.max(1, Number(e.target.value) || 1),
+                            })
+                          }
+                        />
+                      </td>
+                      <td>
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          className="h-8 w-28"
+                          value={item.unitPrice}
+                          onChange={(e) =>
+                            updateItem(idx, {
+                              unitPrice: Number(e.target.value) || 0,
+                            })
+                          }
+                        />
+                      </td>
+                      <td>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={100}
+                          step="0.01"
+                          className="h-8 w-24"
+                          value={item.taxPercent}
+                          onChange={(e) =>
+                            updateItem(idx, {
+                              taxPercent: Number(e.target.value) || 0,
+                            })
+                          }
+                        />
+                      </td>
+                      <td>{formatCurrency(line)}</td>
+                      <td>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() =>
+                            setItems((prev) =>
+                              prev.filter((_, i) => i !== idx)
+                            )
+                          }
+                        >
+                          Remove
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {items.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="py-8 text-center text-[var(--muted)]"
+                    >
+                      Add services with price and tax % to build the invoice
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </TableScroll>
-            <p className="mt-4 text-right text-lg font-semibold">
-              Total: {formatCurrency(total)}
-            </p>
+            <div className="mt-4 space-y-1 text-sm">
+              <div className="flex justify-end gap-8">
+                <span className="text-[var(--muted)]">Subtotal</span>
+                <span>{formatCurrency(totals.subtotal)}</span>
+              </div>
+              <div className="flex justify-end gap-8">
+                <span className="text-[var(--muted)]">Tax</span>
+                <span>{formatCurrency(totals.taxTotal)}</span>
+              </div>
+              <div className="flex justify-end gap-8">
+                <span className="text-[var(--muted)]">Discount</span>
+                <span>{formatCurrency(discount)}</span>
+              </div>
+              <p className="text-right text-lg font-semibold">
+                Total: {formatCurrency(totals.total)}
+              </p>
+            </div>
           </div>
 
           <Button form="invoice-form" type="submit" disabled={loading}>

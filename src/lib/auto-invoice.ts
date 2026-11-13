@@ -36,13 +36,15 @@ export async function createInvoiceFromEncounter(params: {
     isActive: true,
   });
   if (consult) {
+    const taxPercent = consult.taxPercent || 0;
     items.push({
       serviceId: consult._id,
       description: consult.name,
       quantity: 1,
       unitPrice: consult.price,
-      taxPercent: consult.taxPercent || 0,
-      amount: consult.price,
+      taxPercent,
+      amount:
+        Math.round(consult.price * (1 + taxPercent / 100) * 100) / 100,
     });
   }
 
@@ -53,7 +55,7 @@ export async function createInvoiceFromEncounter(params: {
       if (unitPrice <= 0 && !item.serviceId) continue;
 
       let price = unitPrice;
-      let taxPercent = 0;
+      let taxPercent = Number(item.taxPercent || 0);
       let serviceId = item.serviceId;
       let description = item.medicineName;
 
@@ -61,7 +63,7 @@ export async function createInvoiceFromEncounter(params: {
         const service = await Service.findById(item.serviceId);
         if (service) {
           price = unitPrice > 0 ? unitPrice : service.price;
-          taxPercent = service.taxPercent || 0;
+          if (!taxPercent) taxPercent = service.taxPercent || 0;
           description = `${item.medicineName} (${service.name})`;
           serviceId = service._id;
         }

@@ -1,11 +1,10 @@
 import { connectDB } from "@/lib/db";
 import { Hospital, Service } from "@/models";
 import { PageHeader } from "@/components/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TableScroll } from "@/components/ui/data-table";
-import { formatCurrency } from "@/lib/utils";
+import { hasPermission, type Role } from "@/lib/permissions";
 import { requirePagePermission } from "@/lib/page-auth";
 import { HospitalSettingsForm } from "./hospital-settings-form";
+import { ServiceCatalogue } from "./service-catalogue";
 
 export default async function SettingsPage() {
   const session = await requirePagePermission("settings:manage");
@@ -27,11 +26,16 @@ export default async function SettingsPage() {
     );
   }
 
+  const canManageServices = hasPermission(
+    session.user.role as Role,
+    "billing:write"
+  );
+
   return (
     <div>
       <PageHeader
         title="Settings"
-        description="Hospital configuration and service catalogue"
+        description="Hospital configuration and service catalogue (price + tax %)"
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -47,33 +51,17 @@ export default async function SettingsPage() {
           }}
         />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Service catalogue</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <TableScroll className="border-0 shadow-none rounded-none">
-              <thead>
-                <tr>
-                  <th>Code</th>
-                  <th>Name</th>
-                  <th>Category</th>
-                  <th>Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                {services.map((s) => (
-                  <tr key={String(s._id)}>
-                    <td>{s.code}</td>
-                    <td>{s.name}</td>
-                    <td className="capitalize">{s.category}</td>
-                    <td>{formatCurrency(s.price)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </TableScroll>
-          </CardContent>
-        </Card>
+        <ServiceCatalogue
+          canManage={canManageServices}
+          initialServices={services.map((s) => ({
+            _id: String(s._id),
+            code: s.code,
+            name: s.name,
+            category: s.category,
+            price: s.price,
+            taxPercent: s.taxPercent ?? 0,
+          }))}
+        />
       </div>
     </div>
   );
