@@ -1,36 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MediFlow — Hospital ERP + CRM (Phase 1 MVP)
 
-## Getting Started
+Next.js + MongoDB hospital operations platform. Vercel-deployable single-hospital foundation covering auth/RBAC, patients, appointments/queue, basic EMR, billing, audit, and dashboards.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router) + TypeScript + Tailwind CSS
+- **MongoDB** via Mongoose (use [MongoDB Atlas](https://www.mongodb.com/atlas) for Vercel)
+- **Auth.js (NextAuth v5)** credentials + JWT sessions
+- Role-based access: Admin, Receptionist, Doctor, Nurse, Accountant, Auditor
+
+## Local setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Copy env and set MongoDB URI:
+
+```bash
+cp .env.example .env.local
+```
+
+3. Start MongoDB locally **or** point `MONGODB_URI` at Atlas.
+
+4. Seed demo data:
+
+```bash
+npm run seed
+```
+
+5. Run the app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Demo users
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | `admin@mediflow.local` | `Admin@12345` |
+| Doctor | `dr.mehta@mediflow.local` | `Doctor@12345` |
+| Reception | `reception@mediflow.local` | `Reception@12345` |
+| Accounts | `accounts@mediflow.local` | `Accounts@12345` |
 
-## Learn More
+## Phase 1 scope
 
-To learn more about Next.js, take a look at the following resources:
+- Secure login + RBAC + audit foundation
+- Patient registration with UHID, search, profile
+- Departments, doctors/staff, schedules
+- Appointment booking, check-in, token queue
+- Encounter notes, diagnosis, signed prescriptions
+- Service catalogue, invoices, payments/receipts
+- Operational dashboard + MTD reports
+- Later-phase modules shown as navigation shells only
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Vercel deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Create a MongoDB Atlas cluster and database user; whitelist `0.0.0.0/0` (or Vercel IPs).
+2. Push this repo to GitHub and import the project in Vercel.
+3. Set environment variables:
 
-## Deploy on Vercel
+| Variable | Value |
+|----------|-------|
+| `MONGODB_URI` | Atlas connection string |
+| `AUTH_SECRET` | `openssl rand -base64 32` |
+| `AUTH_URL` | Your Vercel URL (e.g. `https://mediflow.vercel.app`) |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+4. Deploy. After first deploy, run seed once against Atlas:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+MONGODB_URI="your-atlas-uri" npm run seed
+```
+
+## Scripts
+
+- `npm run dev` — development server
+- `npm run build` — production build
+- `npm run start` — start production server
+- `npm run seed` — seed hospital, users, departments, services
+- `npm run lint` — ESLint
+- `npm run test:rbac` — live RBAC matrix (dev server required)
+- `npm run test:ui` — UI smoke (Playwright; browsers on `PLAYWRIGHT_BROWSERS_PATH`)
+
+## Vercel env checklist
+
+After connecting this repo in Vercel, set:
+
+- `MONGODB_URI`
+- `AUTH_SECRET`
+- `AUTH_URL` (production domain, e.g. `https://your-app.vercel.app`)
+
+Optional seed vars: `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`.
+
+Then run `npm run seed` once locally against the same Atlas URI so demo users exist.
+
+## Project layout
+
+```
+src/
+  app/(app)/          # Authenticated pages
+  app/api/            # REST API routes
+  components/         # UI + layout
+  lib/                # db, auth, permissions, audit
+  models/             # Mongoose schemas
+scripts/seed.ts       # Demo data seeder
+```

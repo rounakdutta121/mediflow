@@ -1,26 +1,227 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --brand: #0891b2;
+  --brand-hover: #0e7490;
+  --brand-soft: #ecfeff;
+  --accent: #059669;
+  --accent-hover: #047857;
+  --brand-navy: #0b1628;
+  --brand-navy-hover: #15233a;
+  --brand-teal: #0891b2;
+  --brand-teal-hover: #0e7490;
+  --background: #f0f7fa;
+  --foreground: #0f172a;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --surface-muted: #e8f2f6;
+  --border: #d5e4eb;
+  --muted: #64748b;
+  --ring: #0891b2;
+  --danger: #dc2626;
+  --success: #059669;
+  --warning: #d97706;
+  --sidebar: #0b1628;
+  --sidebar-fg: #e2e8f0;
+  --sidebar-muted: #94a3b8;
+  --sidebar-active: rgba(34, 211, 238, 0.14);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --glow: 0 0 0 3px rgba(8, 145, 178, 0.22);
+  --mesh-a: rgba(8, 145, 178, 0.12);
+  --mesh-b: rgba(5, 150, 105, 0.08);
+}
+
+.dark .text-slate-500,
+.dark .text-slate-600,
+.dark .text-slate-400 {
+  color: var(--muted) !important;
+}
+
+.dark .text-slate-700,
+.dark .text-slate-800,
+.dark .text-slate-900 {
+  color: var(--foreground) !important;
+}
+
+.dark .bg-white {
+  background-color: var(--surface) !important;
+}
+
+.dark {
+  color-scheme: dark;
+  --brand: #22d3ee;
+  --brand-hover: #67e8f9;
+  --brand-soft: rgba(34, 211, 238, 0.12);
+  --accent: #34d399;
+  --accent-hover: #6ee7b7;
+  --brand-navy: #22d3ee;
+  --brand-navy-hover: #67e8f9;
+  --brand-teal: #22d3ee;
+  --brand-teal-hover: #67e8f9;
+  --background: #070b12;
+  --foreground: #e8eef6;
+  --surface: #0f1623;
+  --surface-elevated: #151e2e;
+  --surface-muted: #1a2436;
+  --border: #243044;
+  --muted: #94a3b8;
+  --ring: #22d3ee;
+  --danger: #f87171;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --sidebar: #060a11;
+  --sidebar-fg: #e2e8f0;
+  --sidebar-muted: #8494a7;
+  --sidebar-active: rgba(34, 211, 238, 0.16);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --glow: 0 0 0 3px rgba(34, 211, 238, 0.28);
+  --mesh-a: rgba(34, 211, 238, 0.08);
+  --mesh-b: rgba(52, 211, 153, 0.06);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-manrope);
+  --font-display: var(--font-sora);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-manrope), system-ui, sans-serif;
+    min-height: 100dvh;
+  }
+
+  a {
+    text-decoration: none;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--brand) 35%, transparent);
+  }
+
+  :focus-visible {
+    outline: none;
+    box-shadow: var(--glow);
+  }
+
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: color-mix(in oklab, var(--muted) 80%, transparent);
   }
 }
 
-body {
-  background: var(--background);
+@layer utilities {
+  .font-display {
+    font-family: var(--font-sora), var(--font-manrope), system-ui, sans-serif;
+  }
+
+  .app-mesh {
+    background:
+      radial-gradient(900px 420px at 0% -10%, var(--mesh-a), transparent 60%),
+      radial-gradient(700px 380px at 100% 0%, var(--mesh-b), transparent 55%),
+      var(--background);
+  }
+
+  .glass-panel {
+    background: color-mix(in oklab, var(--surface) 88%, transparent);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .text-muted {
+    color: var(--muted);
+  }
+
+  .surface {
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes mf-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.mf-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--brand) 18%, transparent),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: mf-shimmer 2.4s linear infinite;
+}
+
+.mf-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--surface-muted);
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.mf-table tbody td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.875rem;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  vertical-align: middle;
+}
+
+.mf-table tbody tr:hover td {
+  background: color-mix(in oklab, var(--surface-muted) 55%, transparent);
+}
+
+.mf-table tbody tr:nth-child(even) td {
+  background: color-mix(in oklab, var(--surface-muted) 28%, transparent);
+}
+
+.mf-table tbody tr:nth-child(even):hover td {
+  background: color-mix(in oklab, var(--surface-muted) 65%, transparent);
 }
