@@ -29,11 +29,27 @@ export async function connectDB() {
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(getMongoUri(), {
-      bufferCommands: false,
-    });
+    cached.promise = mongoose
+      .connect(getMongoUri(), {
+        bufferCommands: false,
+        maxPoolSize: 10,
+        minPoolSize: 0,
+        serverSelectionTimeoutMS: 8000,
+        socketTimeoutMS: 45000,
+        maxIdleTimeMS: 30000,
+      })
+      .then((conn) => conn)
+      .catch((err) => {
+        cached.promise = null;
+        throw err;
+      });
   }
 
-  cached.conn = await cached.promise;
-  return cached.conn;
+  try {
+    cached.conn = await cached.promise;
+    return cached.conn;
+  } catch (err) {
+    cached.promise = null;
+    throw err;
+  }
 }

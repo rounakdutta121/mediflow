@@ -188,7 +188,14 @@
     transparent
   );
   background-size: 200% 100%;
-  animation: mf-shimmer 2.4s linear infinite;
+  animation: mf-shimmer 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mf-shimmer {
+    animation: none;
+    background: color-mix(in oklab, var(--brand) 16%, transparent);
+  }
 }
 
 .mf-table thead th {

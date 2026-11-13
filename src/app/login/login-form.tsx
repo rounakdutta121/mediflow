@@ -132,7 +132,7 @@ export function LoginForm() {
                 {error}
               </p>
             )}
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" loading={loading}>
               {loading ? "Signing in…" : "Sign in"}
             </Button>
           </form>

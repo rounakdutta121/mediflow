@@ -2,6 +2,7 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { Spinner } from "@/components/ui/spinner";
 
 const buttonVariants = cva(
   "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 active:scale-[0.98]",
@@ -37,17 +38,45 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  loading?: boolean;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      loading = false,
+      disabled,
+      children,
+      ...props
+    },
+    ref
+  ) => {
     const Comp = asChild ? Slot : "button";
+    // Slot requires a single child — never inject spinner when asChild.
+    const content =
+      !asChild && loading ? (
+        <>
+          <Spinner size="sm" className="opacity-90" />
+          <span>{children}</span>
+        </>
+      ) : (
+        children
+      );
+
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
+        disabled={disabled || loading}
+        aria-busy={loading || undefined}
         {...props}
-      />
+      >
+        {content}
+      </Comp>
     );
   }
 );

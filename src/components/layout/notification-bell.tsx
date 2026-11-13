@@ -31,7 +31,7 @@ export function NotificationBell() {
 
   useEffect(() => {
     load();
-    const timer = setInterval(load, 15000);
+    const timer = setInterval(load, 45000);
     return () => clearInterval(timer);
   }, [load]);
 
