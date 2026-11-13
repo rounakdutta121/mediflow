@@ -1,5 +1,6 @@
 import { connectDB } from "@/lib/db";
 import { AuditLog } from "@/models";
+import { bumpLive } from "@/lib/live";
 import type { Types } from "mongoose";
 
 export async function writeAudit(params: {
@@ -26,6 +27,8 @@ export async function writeAudit(params: {
       ip: params.ip,
       success: params.success ?? true,
     });
+    // Drive cross-user live UI updates for every audited mutation.
+    await bumpLive(params.hospitalId);
   } catch (error) {
     console.error("Failed to write audit log", error);
   }

@@ -9,6 +9,9 @@ export interface IHospital {
   email?: string;
   timezone: string;
   currency: string;
+  /** Monotonic counter bumped on every hospital data mutation for live UI sync. */
+  liveRevision: number;
+  liveAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,6 +25,8 @@ const HospitalSchema = new Schema<IHospital>(
     email: String,
     timezone: { type: String, default: "Asia/Kolkata" },
     currency: { type: String, default: "INR" },
+    liveRevision: { type: Number, default: 0 },
+    liveAt: { type: Date },
   },
   { timestamps: true }
 );

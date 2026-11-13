@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell, CheckCheck, Trash2 } from "lucide-react";
 import { formatDateTime } from "@/lib/utils";
+import { LIVE_EVENT } from "@/lib/live-events";
 
 type NotificationItem = {
   _id: string;
@@ -32,7 +33,14 @@ export function NotificationBell() {
   useEffect(() => {
     load();
     const timer = setInterval(load, 45000);
-    return () => clearInterval(timer);
+    function onLive() {
+      load();
+    }
+    window.addEventListener(LIVE_EVENT, onLive);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener(LIVE_EVENT, onLive);
+    };
   }, [load]);
 
   useEffect(() => {

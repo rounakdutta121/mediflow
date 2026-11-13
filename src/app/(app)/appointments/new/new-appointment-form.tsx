@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { useLiveReload } from "@/hooks/use-live-reload";
 
 type Patient = { _id: string; uhid: string; firstName: string; lastName: string };
 type Doctor = {
@@ -32,7 +33,7 @@ export function NewAppointmentForm() {
   const [doctorId, setDoctorId] = useState("");
   const [departmentId, setDepartmentId] = useState("");
 
-  useEffect(() => {
+  const loadCatalogs = useCallback(() => {
     Promise.all([
       fetch("/api/patients?limit=100").then((r) => r.json()),
       fetch("/api/staff?role=DOCTOR").then((r) => r.json()),
@@ -48,6 +49,12 @@ export function NewAppointmentForm() {
       }
     });
   }, [searchParams]);
+
+  useEffect(() => {
+    loadCatalogs();
+  }, [loadCatalogs]);
+
+  useLiveReload(loadCatalogs);
 
   useEffect(() => {
     const doctor = doctors.find((d) => d._id === doctorId);

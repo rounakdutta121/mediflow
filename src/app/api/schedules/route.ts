@@ -1,5 +1,6 @@
 import { DoctorSchedule } from "@/models";
 import { jsonError, jsonOk, requireSession } from "@/lib/api";
+import { writeAudit } from "@/lib/audit";
 
 export async function GET(req: Request) {
   try {
@@ -38,6 +39,15 @@ export async function POST(req: Request) {
       startTime: body.startTime,
       endTime: body.endTime,
       slotDurationMinutes: body.slotDurationMinutes || 15,
+    });
+
+    await writeAudit({
+      hospitalId: session.user.hospitalId,
+      actorId: session.user.id,
+      actorEmail: session.user.email,
+      action: "create",
+      resource: "schedule",
+      resourceId: schedule._id.toString(),
     });
 
     return jsonOk(schedule, 201);

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
+import { LiveSync } from "@/components/live-sync";
 import type { Role } from "@/lib/permissions";
 
 export default async function AppLayout({
@@ -14,6 +15,7 @@ export default async function AppLayout({
 
   return (
     <div className="flex min-h-dvh bg-[var(--background)]">
+      <LiveSync />
       <Sidebar role={session.user.role as Role} />
       <div className="flex min-w-0 flex-1 flex-col app-mesh">
         <Topbar

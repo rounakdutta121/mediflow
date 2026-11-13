@@ -35,8 +35,12 @@ export async function requireSession(permission?: Permission | Permission[]) {
   return session;
 }
 
-export function jsonOk<T>(data: T, status = 200) {
-  return NextResponse.json(data, { status });
+export function jsonOk<T>(
+  data: T,
+  status = 200,
+  headers?: HeadersInit
+) {
+  return NextResponse.json(data, { status, headers });
 }
 
 export function jsonError(error: unknown) {

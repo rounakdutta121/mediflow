@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { useLiveReload } from "@/hooks/use-live-reload";
 
 export function NewEncounterForm() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export function NewEncounterForm() {
   );
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  const loadPatients = useCallback(() => {
     fetch("/api/patients?limit=100")
       .then((r) => r.json())
       .then((d) => {
@@ -34,6 +35,12 @@ export function NewEncounterForm() {
         }
       });
   }, [searchParams]);
+
+  useEffect(() => {
+    loadPatients();
+  }, [loadPatients]);
+
+  useLiveReload(loadPatients);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();

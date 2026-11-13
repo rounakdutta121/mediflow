@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/status-badge";
 import { formatCurrency } from "@/lib/utils";
+import { useLiveReload } from "@/hooks/use-live-reload";
 
 type Service = {
   _id: string;
@@ -97,12 +98,18 @@ export function EncounterWorkspace({
     unitPrice: "",
   });
 
-  useEffect(() => {
+  const loadServices = useCallback(() => {
     fetch("/api/services")
       .then((r) => r.json())
       .then((d) => setServices(d.items || []))
       .catch(() => undefined);
   }, []);
+
+  useEffect(() => {
+    loadServices();
+  }, [loadServices]);
+
+  useLiveReload(loadServices);
 
   async function saveNotes() {
     setLoading(true);

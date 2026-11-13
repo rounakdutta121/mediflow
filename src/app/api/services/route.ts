@@ -1,5 +1,7 @@
 import { Service } from "@/models";
 import { jsonError, jsonOk, requireSession } from "@/lib/api";
+import { writeAudit } from "@/lib/audit";
+import { notify } from "@/lib/notifications";
 
 export async function GET() {
   try {
@@ -29,6 +31,27 @@ export async function POST(req: Request) {
       price: body.price,
       taxPercent: body.taxPercent || 0,
     });
+
+    await writeAudit({
+      hospitalId: session.user.hospitalId,
+      actorId: session.user.id,
+      actorEmail: session.user.email,
+      action: "create",
+      resource: "service",
+      resourceId: service._id.toString(),
+      details: { code: service.code, price: service.price },
+    });
+
+    await notify({
+      hospitalId: session.user.hospitalId,
+      title: "Service catalog updated",
+      message: `${service.name} added at ${service.price}`,
+      type: "billing",
+      href: "/settings",
+      targetRoles: ["ACCOUNTANT", "RECEPTIONIST"],
+      actorId: session.user.id,
+    });
+
     return jsonOk(service, 201);
   } catch (error) {
     return jsonError(error);

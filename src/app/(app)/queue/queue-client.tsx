@@ -8,6 +8,7 @@ import { TableScroll } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/status-badge";
 import { formatDateTime } from "@/lib/utils";
+import { useLiveReload } from "@/hooks/use-live-reload";
 import Link from "next/link";
 
 type QueueItem = {
@@ -42,6 +43,8 @@ export function QueueClient({ canStartConsult }: { canStartConsult: boolean }) {
     const timer = setInterval(load, 15000);
     return () => clearInterval(timer);
   }, [load]);
+
+  useLiveReload(load);
 
   async function checkIn(appointmentId: string) {
     setLoading(true);

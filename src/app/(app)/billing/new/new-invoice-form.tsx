@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
@@ -11,6 +11,7 @@ import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { TableScroll } from "@/components/ui/data-table";
 import { formatCurrency } from "@/lib/utils";
+import { useLiveReload } from "@/hooks/use-live-reload";
 
 type Service = {
   _id: string;
@@ -44,7 +45,7 @@ export function NewInvoiceForm() {
   >([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  const loadCatalogs = useCallback(() => {
     Promise.all([
       fetch("/api/patients?limit=100").then((r) => r.json()),
       fetch("/api/services").then((r) => r.json()),
@@ -52,7 +53,12 @@ export function NewInvoiceForm() {
       const itemsList = p.items || [];
       setPatients(itemsList);
       setServices(s.items || []);
-      if (s.items?.[0]) setServiceId(s.items[0]._id);
+      setServiceId((prev) => {
+        if (prev && (s.items || []).some((item: Service) => item._id === prev)) {
+          return prev;
+        }
+        return s.items?.[0]?._id || "";
+      });
       const fromQuery = searchParams.get("patientId") || "";
       if (
         fromQuery &&
@@ -62,6 +68,12 @@ export function NewInvoiceForm() {
       }
     });
   }, [searchParams]);
+
+  useEffect(() => {
+    loadCatalogs();
+  }, [loadCatalogs]);
+
+  useLiveReload(loadCatalogs);
 
   const total = useMemo(() => {
     const sub = items.reduce(
