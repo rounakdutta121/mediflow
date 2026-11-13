@@ -20,13 +20,13 @@ export function PatientsTable({ rows }: { rows: PatientRow[] }) {
     {
       id: "uhid",
       header: "UHID",
-      width: 140,
+      width: "minmax(8rem, 1.1fr)",
       cell: (p) => <span className="font-semibold">{p.uhid}</span>,
     },
     {
       id: "name",
       header: "Name",
-      width: 180,
+      width: "minmax(10rem, 1.6fr)",
       cell: (p) => (
         <span>
           {p.firstName} {p.lastName}
@@ -36,25 +36,26 @@ export function PatientsTable({ rows }: { rows: PatientRow[] }) {
     {
       id: "phone",
       header: "Phone",
-      width: 140,
+      width: "minmax(8rem, 1.2fr)",
       cell: (p) => p.phone,
     },
     {
       id: "gender",
       header: "Gender",
-      width: 100,
+      width: "minmax(6rem, 0.8fr)",
       cell: (p) => <span className="capitalize">{p.gender}</span>,
     },
     {
       id: "registered",
       header: "Registered",
-      width: 140,
+      width: "minmax(7rem, 1fr)",
       cell: (p) => formatDate(p.createdAt),
     },
     {
       id: "actions",
       header: "",
-      width: 100,
+      width: "minmax(5rem, 0.6fr)",
+      className: "justify-end",
       cell: (p) => (
         <Button asChild variant="ghost" size="sm">
           <Link href={`/patients/${p._id}`}>View</Link>

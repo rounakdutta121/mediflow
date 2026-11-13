@@ -62,19 +62,20 @@ export function DataTable<T>({
   const colTemplate = useMemo(
     () =>
       columns
-        .map((c) =>
-          typeof c.width === "number"
-            ? `${c.width}px`
-            : c.width || "minmax(8rem, 1fr)"
-        )
+        .map((c) => {
+          if (typeof c.width === "number") {
+            return `minmax(${Math.max(96, Math.round(c.width * 0.75))}px, ${c.width}fr)`;
+          }
+          return c.width || "minmax(8rem, 1fr)";
+        })
         .join(" "),
     [columns]
   );
 
   const minWidth = useMemo(() => {
     const sum = columns.reduce((acc, c) => {
-      if (typeof c.width === "number") return acc + c.width;
-      return acc + 140;
+      if (typeof c.width === "number") return acc + Math.max(96, Math.round(c.width * 0.75));
+      return acc + 120;
     }, 0);
     return Math.max(sum, 640);
   }, [columns]);
@@ -88,6 +89,7 @@ export function DataTable<T>({
           ...style,
           display: "grid",
           gridTemplateColumns: colTemplate,
+          width: "100%",
           minWidth,
         }}
         className={cn(
@@ -144,12 +146,12 @@ export function DataTable<T>({
         <div
           role="rowgroup"
           className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--surface-muted)] backdrop-blur-md"
-          style={{ minWidth }}
+          style={{ width: "100%", minWidth }}
         >
           <div
             role="row"
-            className="grid"
-            style={{ gridTemplateColumns: colTemplate, minWidth }}
+            className="grid w-full"
+            style={{ gridTemplateColumns: colTemplate, width: "100%", minWidth }}
           >
             {columns.map((col) => (
               <div
@@ -169,7 +171,12 @@ export function DataTable<T>({
         {useVirtual ? (
           <div
             role="rowgroup"
-            style={{ height: virtualizer.getTotalSize(), position: "relative", minWidth }}
+            style={{
+              height: virtualizer.getTotalSize(),
+              position: "relative",
+              width: "100%",
+              minWidth,
+            }}
           >
             {virtualizer.getVirtualItems().map((vRow) => {
               const row = rows[vRow.index];
@@ -184,7 +191,7 @@ export function DataTable<T>({
             })}
           </div>
         ) : (
-          <div role="rowgroup" style={{ minWidth }}>
+          <div role="rowgroup" style={{ width: "100%", minWidth }}>
             {rows.map((row, index) => renderRow(row, index))}
           </div>
         )}
