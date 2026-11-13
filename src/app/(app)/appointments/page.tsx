@@ -1,15 +1,11 @@
-import Link from "next/link";
 import { connectDB } from "@/lib/db";
 import { Appointment } from "@/models";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
-import { TableScroll } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/status-badge";
-import { formatDateTime } from "@/lib/utils";
 import { hasPermission, type Role } from "@/lib/permissions";
 import { requirePagePermission } from "@/lib/page-auth";
-import { AppointmentRowActions } from "@/components/appointment-row-actions";
+import { AppointmentsLiveTable } from "./appointments-live-table";
 
 export default async function AppointmentsPage({
   searchParams,
@@ -42,6 +38,28 @@ export default async function AppointmentsPage({
 
   const canWrite = hasPermission(session.user.role as Role, "appointments:write");
   const canDelete = canWrite;
+
+  const initialRows = appointments.map((a) => {
+    const patient = a.patientId as unknown as {
+      _id?: string;
+      uhid?: string;
+      firstName?: string;
+      lastName?: string;
+    };
+    const doctor = a.doctorId as unknown as { name?: string };
+    const dept = a.departmentId as unknown as { name?: string };
+    return {
+      _id: String(a._id),
+      scheduledAt: String(a.scheduledAt),
+      status: a.status,
+      tokenNumber: a.tokenNumber,
+      patientId: patient
+        ? { ...patient, _id: patient._id ? String(patient._id) : undefined }
+        : undefined,
+      doctorId: doctor,
+      departmentId: dept,
+    };
+  });
 
   return (
     <div>
@@ -86,61 +104,12 @@ export default async function AppointmentsPage({
 
       <Card>
         <CardContent className="p-0">
-          <TableScroll className="border-0 shadow-none rounded-none">
-            <thead>
-              <tr>
-                <th>Time</th>
-                <th>Patient</th>
-                <th>Doctor</th>
-                <th>Department</th>
-                <th>Token</th>
-                <th>Status</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {appointments.map((a) => {
-                const patient = a.patientId as unknown as {
-                  _id: string;
-                  uhid: string;
-                  firstName: string;
-                  lastName: string;
-                };
-                const doctor = a.doctorId as unknown as { name: string };
-                const dept = a.departmentId as unknown as { name: string };
-                return (
-                  <tr key={String(a._id)}>
-                    <td>{formatDateTime(a.scheduledAt)}</td>
-                    <td>
-                      <Link
-                        href={`/patients/${patient?._id}`}
-                        className="font-medium text-[var(--brand-teal)] hover:underline"
-                      >
-                        {patient?.firstName} {patient?.lastName}
-                      </Link>
-                      <div className="text-xs text-slate-500">{patient?.uhid}</div>
-                    </td>
-                    <td>{doctor?.name}</td>
-                    <td>{dept?.name}</td>
-                    <td>{a.tokenNumber ?? "—"}</td>
-                    <td>
-                      <StatusBadge status={a.status} />
-                    </td>
-                    <td>
-                      <AppointmentRowActions id={String(a._id)} canDelete={canDelete} />
-                    </td>
-                  </tr>
-                );
-              })}
-              {appointments.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="py-10 text-center text-slate-500">
-                    No appointments for this day
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </TableScroll>
+          <AppointmentsLiveTable
+            initialRows={initialRows}
+            date={selectedDate}
+            status={status}
+            canDelete={canDelete}
+          />
         </CardContent>
       </Card>
     </div>

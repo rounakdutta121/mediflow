@@ -27,9 +27,10 @@ export async function writeAudit(params: {
       ip: params.ip,
       success: params.success ?? true,
     });
-    // Drive cross-user live UI updates for every audited mutation.
-    await bumpLive(params.hospitalId);
   } catch (error) {
     console.error("Failed to write audit log", error);
   }
+
+  // Always bump live revision for cross-user UI sync, even if audit insert failed.
+  await bumpLive(params.hospitalId);
 }

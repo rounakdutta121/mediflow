@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { hasPermission, type Role } from "@/lib/permissions";
 import { requirePagePermission } from "@/lib/page-auth";
 import { FadeIn } from "@/components/motion/fade-in";
-import { PatientsTable } from "./patients-table";
+import { PatientsLiveTable } from "./patients-live-table";
 
 export default async function PatientsPage({
   searchParams,
@@ -72,7 +72,7 @@ export default async function PatientsPage({
         </CardContent>
       </Card>
 
-      <PatientsTable rows={rows} />
+      <PatientsLiveTable initialRows={rows} q={q} />
     </FadeIn>
   );
 }

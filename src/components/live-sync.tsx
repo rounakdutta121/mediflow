@@ -4,8 +4,8 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { LIVE_EVENT } from "@/lib/live-events";
 
-const POLL_MS = 2500;
-const POLL_HIDDEN_MS = 15000;
+const POLL_MS = 1500;
+const POLL_HIDDEN_MS = 10000;
 
 type LiveSnapshot = {
   revision: number;
@@ -27,6 +27,21 @@ export function LiveSync() {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
 
+    function publish(data: LiveSnapshot) {
+      revisionRef.current = data.revision;
+      currencyRef.current = data.currency;
+      router.refresh();
+      window.dispatchEvent(
+        new CustomEvent(LIVE_EVENT, {
+          detail: {
+            revision: data.revision,
+            at: data.at,
+            currency: data.currency,
+          },
+        })
+      );
+    }
+
     async function tick() {
       if (cancelled || inFlight.current) {
         schedule();
@@ -34,9 +49,10 @@ export function LiveSync() {
       }
       inFlight.current = true;
       try {
-        const res = await fetch("/api/live", {
+        const res = await fetch(`/api/live?t=${Date.now()}`, {
           cache: "no-store",
           credentials: "same-origin",
+          headers: { Pragma: "no-cache", "Cache-Control": "no-cache" },
         });
         if (res.ok) {
           const data = (await res.json()) as LiveSnapshot;
@@ -50,18 +66,7 @@ export function LiveSync() {
             data.revision !== prev ||
             (data.currency && data.currency !== prevCurrency)
           ) {
-            revisionRef.current = data.revision;
-            currencyRef.current = data.currency;
-            router.refresh();
-            window.dispatchEvent(
-              new CustomEvent(LIVE_EVENT, {
-                detail: {
-                  revision: data.revision,
-                  at: data.at,
-                  currency: data.currency,
-                },
-              })
-            );
+            publish(data);
           }
         }
       } catch {
