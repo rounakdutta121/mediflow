@@ -134,26 +134,24 @@ export function InvoiceDocument({
           <dl className="invoice-dl">
             <div>
               <dt>UHID</dt>
-              <dd>{patient.uhid}</dd>
+              <dd>{patient.uhid || "—"}</dd>
             </div>
-            {patient.phone && (
-              <div>
-                <dt>Phone</dt>
-                <dd>{patient.phone}</dd>
-              </div>
-            )}
-            {patient.gender && patient.gender !== "unknown" && (
-              <div>
-                <dt>Gender</dt>
-                <dd className="capitalize">{patient.gender}</dd>
-              </div>
-            )}
-            {address && (
-              <div className="invoice-dl-span">
-                <dt>Address</dt>
-                <dd>{address}</dd>
-              </div>
-            )}
+            <div>
+              <dt>Phone</dt>
+              <dd>{patient.phone || "—"}</dd>
+            </div>
+            <div>
+              <dt>Gender</dt>
+              <dd className="capitalize">
+                {patient.gender && patient.gender !== "unknown"
+                  ? patient.gender
+                  : "—"}
+              </dd>
+            </div>
+            <div className="invoice-dl-span">
+              <dt>Address</dt>
+              <dd>{address || "—"}</dd>
+            </div>
           </dl>
         </div>
         <div>

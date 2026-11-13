@@ -535,40 +535,74 @@
   line-height: 1.4;
 }
 
+/* Invoice stays paper-white in dark mode so patient/billing fields stay readable
+   and the on-screen bill matches the printed A4 sheet. */
+.dark .invoice-print-sheet,
+.dark .invoice-print-sheet * {
+  color-scheme: light;
+}
+
 .dark .invoice-print-sheet {
-  background: var(--surface);
-  color: var(--foreground);
-  border-color: var(--border);
+  background: #fff !important;
+  color: #0f172a !important;
+  border-color: #d5e4eb !important;
 }
 
 .dark .invoice-hospital-name,
 .dark .invoice-number,
 .dark .invoice-patient-name,
+.dark .invoice-dl dd,
+.dark .invoice-words,
+.dark .invoice-items td,
+.dark .invoice-payments-table td,
 .dark .invoice-total-row dt,
 .dark .invoice-total-row dd {
-  color: var(--foreground);
+  color: #0f172a !important;
+}
+
+.dark .invoice-section-label,
+.dark .invoice-dl dt,
+.dark .invoice-hospital-meta,
+.dark .invoice-hospital-code,
+.dark .invoice-muted,
+.dark .invoice-disclaimer,
+.dark .invoice-sign {
+  color: #64748b !important;
 }
 
 .dark .invoice-header {
-  border-bottom-color: color-mix(in oklab, var(--foreground) 55%, transparent);
+  border-bottom-color: #0b1628 !important;
 }
 
 .dark .invoice-items th,
 .dark .invoice-payments-table th {
-  background: var(--surface-muted);
-  color: var(--muted);
-  border-color: var(--border);
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border-color: #cbd5e1 !important;
 }
 
 .dark .invoice-items td,
 .dark .invoice-payments-table td,
 .dark .invoice-payments {
-  border-color: var(--border);
+  border-color: #e2e8f0 !important;
 }
 
 .dark .invoice-totals {
-  background: var(--surface-muted);
-  border-color: var(--border);
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+
+.dark .invoice-totals dt {
+  color: #64748b !important;
+}
+
+.dark .invoice-totals dd {
+  color: #0f172a !important;
+}
+
+.dark .invoice-balance-row dt,
+.dark .invoice-balance-row dd {
+  color: #0e7490 !important;
 }
 
 @media print {
