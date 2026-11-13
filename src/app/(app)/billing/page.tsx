@@ -21,18 +21,25 @@ export default async function BillingPage() {
   const canWrite = hasPermission(session.user.role as Role, "billing:write");
   const initialRows = invoices.map((inv) => {
     const patient = inv.patientId as unknown as {
+      _id?: { toString(): string } | string;
       firstName?: string;
       lastName?: string;
       uhid?: string;
-    };
+    } | null;
     return {
       _id: String(inv._id),
       invoiceNumber: inv.invoiceNumber,
-      createdAt: String(inv.createdAt),
+      createdAt: new Date(inv.createdAt).toISOString(),
       total: inv.total,
       balance: inv.balance,
       status: inv.status,
-      patientId: patient,
+      patientId: patient
+        ? {
+            firstName: patient.firstName || "",
+            lastName: patient.lastName || "",
+            uhid: patient.uhid || "",
+          }
+        : undefined,
     };
   });
 

@@ -27,21 +27,33 @@ export default async function ClinicalPage() {
   const canWrite = hasPermission(session.user.role as Role, "clinical:write");
   const initialRows = encounters.map((e) => {
     const patient = e.patientId as unknown as {
-      _id?: string;
+      _id?: { toString(): string } | string;
       uhid?: string;
       firstName?: string;
       lastName?: string;
-    };
-    const doctor = e.doctorId as unknown as { name?: string };
+    } | null;
+    const doctor = e.doctorId as unknown as {
+      _id?: { toString(): string } | string;
+      name?: string;
+    } | null;
     return {
       _id: String(e._id),
-      createdAt: String(e.createdAt),
-      chiefComplaint: e.chiefComplaint,
+      createdAt: new Date(e.createdAt).toISOString(),
+      chiefComplaint: e.chiefComplaint || "",
       status: e.status,
       patientId: patient
-        ? { ...patient, _id: patient._id ? String(patient._id) : undefined }
+        ? {
+            _id: patient._id ? String(patient._id) : undefined,
+            uhid: patient.uhid || "",
+            firstName: patient.firstName || "",
+            lastName: patient.lastName || "",
+          }
         : undefined,
-      doctorId: doctor,
+      doctorId: doctor
+        ? {
+            name: doctor.name || "",
+          }
+        : undefined,
     };
   });
 

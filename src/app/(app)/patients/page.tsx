@@ -40,8 +40,8 @@ export default async function PatientsPage({
     firstName: p.firstName,
     lastName: p.lastName,
     phone: p.phone,
-    gender: p.gender,
-    createdAt: p.createdAt,
+    gender: p.gender || "unknown",
+    createdAt: new Date(p.createdAt).toISOString(),
   }));
 
   return (

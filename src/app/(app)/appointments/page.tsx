@@ -41,23 +41,28 @@ export default async function AppointmentsPage({
 
   const initialRows = appointments.map((a) => {
     const patient = a.patientId as unknown as {
-      _id?: string;
+      _id?: { toString(): string } | string;
       uhid?: string;
       firstName?: string;
       lastName?: string;
-    };
-    const doctor = a.doctorId as unknown as { name?: string };
-    const dept = a.departmentId as unknown as { name?: string };
+    } | null;
+    const doctor = a.doctorId as unknown as { name?: string } | null;
+    const dept = a.departmentId as unknown as { name?: string } | null;
     return {
       _id: String(a._id),
-      scheduledAt: String(a.scheduledAt),
+      scheduledAt: new Date(a.scheduledAt).toISOString(),
       status: a.status,
       tokenNumber: a.tokenNumber,
       patientId: patient
-        ? { ...patient, _id: patient._id ? String(patient._id) : undefined }
+        ? {
+            _id: patient._id ? String(patient._id) : undefined,
+            uhid: patient.uhid || "",
+            firstName: patient.firstName || "",
+            lastName: patient.lastName || "",
+          }
         : undefined,
-      doctorId: doctor,
-      departmentId: dept,
+      doctorId: doctor ? { name: doctor.name || "" } : undefined,
+      departmentId: dept ? { name: dept.name || "" } : undefined,
     };
   });
 
