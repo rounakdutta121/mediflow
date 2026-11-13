@@ -17,13 +17,23 @@ export function NewEncounterForm() {
   const [patients, setPatients] = useState<
     { _id: string; uhid: string; firstName: string; lastName: string }[]
   >([]);
+  const [patientId, setPatientId] = useState(
+    searchParams.get("patientId") || ""
+  );
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetch("/api/patients?limit=100")
       .then((r) => r.json())
-      .then((d) => setPatients(d.items || []));
-  }, []);
+      .then((d) => {
+        const items = d.items || [];
+        setPatients(items);
+        const fromQuery = searchParams.get("patientId") || "";
+        if (fromQuery && items.some((item: { _id: string }) => item._id === fromQuery)) {
+          setPatientId(fromQuery);
+        }
+      });
+  }, [searchParams]);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -35,7 +45,7 @@ export function NewEncounterForm() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        patientId: form.get("patientId"),
+        patientId,
         chiefComplaint: form.get("chiefComplaint"),
         history: form.get("history"),
         examination: form.get("examination"),
@@ -81,7 +91,8 @@ export function NewEncounterForm() {
               <Select
                 name="patientId"
                 required
-                defaultValue={searchParams.get("patientId") || ""}
+                value={patientId}
+                onChange={(e) => setPatientId(e.target.value)}
               >
                 <option value="">Select patient</option>
                 {patients.map((p) => (

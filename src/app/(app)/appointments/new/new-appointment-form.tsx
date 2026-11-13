@@ -26,6 +26,9 @@ export function NewAppointmentForm() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
+  const [patientId, setPatientId] = useState(
+    searchParams.get("patientId") || ""
+  );
   const [doctorId, setDoctorId] = useState("");
   const [departmentId, setDepartmentId] = useState("");
 
@@ -35,11 +38,16 @@ export function NewAppointmentForm() {
       fetch("/api/staff?role=DOCTOR").then((r) => r.json()),
       fetch("/api/departments").then((r) => r.json()),
     ]).then(([p, d, dept]) => {
-      setPatients(p.items || []);
+      const items = p.items || [];
+      setPatients(items);
       setDoctors(d.items || []);
       setDepartments(dept.items || []);
+      const fromQuery = searchParams.get("patientId") || "";
+      if (fromQuery && items.some((item: Patient) => item._id === fromQuery)) {
+        setPatientId(fromQuery);
+      }
     });
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     const doctor = doctors.find((d) => d._id === doctorId);
@@ -63,7 +71,7 @@ export function NewAppointmentForm() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        patientId: form.get("patientId"),
+        patientId,
         doctorId,
         departmentId,
         scheduledAt: scheduledAt.toISOString(),
@@ -100,7 +108,8 @@ export function NewAppointmentForm() {
                 id="patientId"
                 name="patientId"
                 required
-                defaultValue={searchParams.get("patientId") || ""}
+                value={patientId}
+                onChange={(e) => setPatientId(e.target.value)}
               >
                 <option value="">Select patient</option>
                 {patients.map((p) => (

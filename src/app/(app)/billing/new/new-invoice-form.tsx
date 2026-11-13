@@ -26,6 +26,9 @@ export function NewInvoiceForm() {
   const [patients, setPatients] = useState<
     { _id: string; uhid: string; firstName: string; lastName: string }[]
   >([]);
+  const [patientId, setPatientId] = useState(
+    searchParams.get("patientId") || ""
+  );
   const [services, setServices] = useState<Service[]>([]);
   const [serviceId, setServiceId] = useState("");
   const [quantity, setQuantity] = useState(1);
@@ -46,11 +49,19 @@ export function NewInvoiceForm() {
       fetch("/api/patients?limit=100").then((r) => r.json()),
       fetch("/api/services").then((r) => r.json()),
     ]).then(([p, s]) => {
-      setPatients(p.items || []);
+      const itemsList = p.items || [];
+      setPatients(itemsList);
       setServices(s.items || []);
       if (s.items?.[0]) setServiceId(s.items[0]._id);
+      const fromQuery = searchParams.get("patientId") || "";
+      if (
+        fromQuery &&
+        itemsList.some((item: { _id: string }) => item._id === fromQuery)
+      ) {
+        setPatientId(fromQuery);
+      }
     });
-  }, []);
+  }, [searchParams]);
 
   const total = useMemo(() => {
     const sub = items.reduce(
@@ -87,7 +98,7 @@ export function NewInvoiceForm() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        patientId: form.get("patientId"),
+        patientId,
         discount,
         items,
         notes: form.get("notes"),
@@ -115,7 +126,8 @@ export function NewInvoiceForm() {
               <Select
                 name="patientId"
                 required
-                defaultValue={searchParams.get("patientId") || ""}
+                value={patientId}
+                onChange={(e) => setPatientId(e.target.value)}
               >
                 <option value="">Select patient</option>
                 {patients.map((p) => (
