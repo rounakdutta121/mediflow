@@ -38,31 +38,31 @@ export default async function SettingsPage() {
         description="Hospital configuration and service catalogue (price + tax %)"
       />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <HospitalSettingsForm
-          hospital={{
-            name: hospital.name,
-            code: hospital.code,
-            address: hospital.address,
-            phone: hospital.phone,
-            email: hospital.email,
-            timezone: hospital.timezone,
-            currency: hospital.currency,
-          }}
-        />
-
-        <ServiceCatalogue
-          canManage={canManageServices}
-          initialServices={services.map((s) => ({
-            _id: String(s._id),
-            code: s.code,
-            name: s.name,
-            category: s.category,
-            price: s.price,
-            taxPercent: s.taxPercent ?? 0,
-          }))}
-        />
-      </div>
+      <ServiceCatalogue
+        canManage={canManageServices}
+        initialServices={services.map((s) => ({
+          _id: String(s._id),
+          code: s.code,
+          name: s.name,
+          category: s.category,
+          price: s.price,
+          taxPercent: s.taxPercent ?? 0,
+        }))}
+        hospitalPanel={
+          <HospitalSettingsForm
+            className="w-full shrink-0 lg:w-[22rem] xl:w-[24rem]"
+            hospital={{
+              name: hospital.name,
+              code: hospital.code,
+              address: hospital.address,
+              phone: hospital.phone,
+              email: hospital.email,
+              timezone: hospital.timezone,
+              currency: hospital.currency,
+            }}
+          />
+        }
+      />
     </div>
   );
 }

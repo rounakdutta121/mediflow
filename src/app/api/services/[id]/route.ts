@@ -57,3 +57,34 @@ export async function PATCH(
     return jsonError(error);
   }
 }
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await requireSession(["billing:write", "settings:manage"]);
+    const { id } = await params;
+
+    const service = await Service.findOneAndUpdate(
+      { _id: id, hospitalId: session.user.hospitalId, isActive: true },
+      { $set: { isActive: false } },
+      { new: true }
+    );
+    if (!service) throw new ApiError("Service not found", 404);
+
+    await writeAudit({
+      hospitalId: session.user.hospitalId,
+      actorId: session.user.id,
+      actorEmail: session.user.email,
+      action: "delete",
+      resource: "service",
+      resourceId: id,
+      details: { code: service.code, softDelete: true },
+    });
+
+    return jsonOk({ ok: true });
+  } catch (error) {
+    return jsonError(error);
+  }
+}

@@ -21,8 +21,10 @@ export type HospitalSettings = {
 
 export function HospitalSettingsForm({
   hospital,
+  className,
 }: {
   hospital: HospitalSettings;
+  className?: string;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -72,7 +74,7 @@ export function HospitalSettingsForm({
   }
 
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
         <CardTitle>Hospital</CardTitle>
         {!editing ? (
