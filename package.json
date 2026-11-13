@@ -10,7 +10,8 @@
     "seed": "tsx --env-file=.env.local scripts/seed.ts",
     "test:e2e": "node scripts/e2e-frontend.mjs",
     "test:rbac": "node scripts/rbac-matrix.mjs",
-    "test:ui": "node scripts/e2e-ui-redesign.mjs"
+    "test:ui": "node scripts/e2e-ui-redesign.mjs",
+    "test:frontend": "node scripts/e2e-full-frontend.mjs"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.3.1",
