@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { hasPermission, type Role } from "@/lib/permissions";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 
@@ -65,6 +65,109 @@ const laterNav: NavItem[] = [
   { href: "/coming-soon/nursing", label: "Nursing", icon: ClipboardList, comingSoon: true },
 ];
 
+function BloodTubeScroll({
+  scrollRef,
+}: {
+  scrollRef: React.RefObject<HTMLElement | null>;
+}) {
+  const [fill, setFill] = useState(0);
+  const [needed, setNeeded] = useState(false);
+  const dragging = useRef(false);
+  const reduce = useReducedMotion();
+
+  const sync = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const max = el.scrollHeight - el.clientHeight;
+    setNeeded(max > 4);
+    setFill(max <= 0 ? 0 : Math.min(1, Math.max(0, el.scrollTop / max)));
+  }, [scrollRef]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    sync();
+    el.addEventListener("scroll", sync, { passive: true });
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", sync);
+      ro.disconnect();
+    };
+  }, [scrollRef, sync]);
+
+  const scrub = useCallback(
+    (clientY: number, tube: HTMLElement) => {
+      const el = scrollRef.current;
+      if (!el) return;
+      const rect = tube.getBoundingClientRect();
+      const ratio = Math.min(1, Math.max(0, (clientY - rect.top) / rect.height));
+      const max = el.scrollHeight - el.clientHeight;
+      el.scrollTop = ratio * max;
+    },
+    [scrollRef]
+  );
+
+  if (!needed) return null;
+
+  return (
+    <div
+      className="sidebar-blood-tube"
+      role="scrollbar"
+      aria-orientation="vertical"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(fill * 100)}
+      aria-label="Sidebar scroll"
+      tabIndex={0}
+      onPointerDown={(e) => {
+        dragging.current = true;
+        e.currentTarget.setPointerCapture(e.pointerId);
+        scrub(e.clientY, e.currentTarget);
+      }}
+      onPointerMove={(e) => {
+        if (!dragging.current) return;
+        scrub(e.clientY, e.currentTarget);
+      }}
+      onPointerUp={() => {
+        dragging.current = false;
+      }}
+      onPointerCancel={() => {
+        dragging.current = false;
+      }}
+      onKeyDown={(e) => {
+        const el = scrollRef.current;
+        if (!el) return;
+        if (e.key === "ArrowDown" || e.key === "PageDown") {
+          e.preventDefault();
+          el.scrollBy({ top: e.key === "PageDown" ? 120 : 40 });
+        } else if (e.key === "ArrowUp" || e.key === "PageUp") {
+          e.preventDefault();
+          el.scrollBy({ top: e.key === "PageUp" ? -120 : -40 });
+        } else if (e.key === "Home") {
+          e.preventDefault();
+          el.scrollTop = 0;
+        } else if (e.key === "End") {
+          e.preventDefault();
+          el.scrollTop = el.scrollHeight;
+        }
+      }}
+    >
+      <span className="sidebar-blood-tube__glass" />
+      <span
+        className={cn(
+          "sidebar-blood-fill",
+          reduce && "sidebar-blood-fill--instant"
+        )}
+        style={{ height: `${Math.max(fill * 100, fill > 0 ? 8 : 0)}%` }}
+      >
+        <span className="sidebar-blood-fill__meniscus" />
+        <span className="sidebar-blood-fill__shine" />
+      </span>
+    </div>
+  );
+}
+
 function NavLinks({
   role,
   collapsed,
@@ -75,59 +178,66 @@ function NavLinks({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
+  const navRef = useRef<HTMLElement>(null);
   const visible = mainNav.filter(
     (item) => !item.permission || hasPermission(role, item.permission)
   );
 
   return (
-    <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-      {visible.map((item) => {
-        const active =
-          pathname === item.href || pathname.startsWith(`${item.href}/`);
-        const Icon = item.icon;
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            className={cn(
-              "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200",
-              active
-                ? "bg-[var(--sidebar-active)] text-white shadow-[inset_0_0_0_1px_rgba(34,211,238,0.25)]"
-                : "text-[var(--sidebar-muted)] hover:bg-white/5 hover:text-white"
-            )}
-            title={item.label}
-          >
-            {active && (
-              <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-cyan-400" />
-            )}
-            <Icon className={cn("h-4 w-4 shrink-0", active && "text-cyan-300")} />
-            {!collapsed && <span className="truncate">{item.label}</span>}
-          </Link>
-        );
-      })}
+    <div className="relative flex min-h-0 flex-1">
+      <nav
+        ref={navRef}
+        className="sidebar-nav-scroll flex-1 space-y-1 overflow-y-auto p-3 pr-4"
+      >
+        {visible.map((item) => {
+          const active =
+            pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={onNavigate}
+              className={cn(
+                "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200",
+                active
+                  ? "bg-[var(--sidebar-active)] text-white shadow-[inset_0_0_0_1px_rgba(34,211,238,0.25)]"
+                  : "text-[var(--sidebar-muted)] hover:bg-white/5 hover:text-white"
+              )}
+              title={item.label}
+            >
+              {active && (
+                <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-cyan-400" />
+              )}
+              <Icon className={cn("h-4 w-4 shrink-0", active && "text-cyan-300")} />
+              {!collapsed && <span className="truncate">{item.label}</span>}
+            </Link>
+          );
+        })}
 
-      {!collapsed && (
-        <p className="px-3 pt-5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
-          Later phases
-        </p>
-      )}
-      {laterNav.map((item) => {
-        const Icon = item.icon;
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-white/35 transition-colors hover:bg-white/5 hover:text-white/60"
-            title={`${item.label} (coming soon)`}
-          >
-            <Icon className="h-4 w-4 shrink-0" />
-            {!collapsed && <span className="truncate">{item.label}</span>}
-          </Link>
-        );
-      })}
-    </nav>
+        {!collapsed && (
+          <p className="px-3 pt-5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
+            Later phases
+          </p>
+        )}
+        {laterNav.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={onNavigate}
+              className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-white/35 transition-colors hover:bg-white/5 hover:text-white/60"
+              title={`${item.label} (coming soon)`}
+            >
+              <Icon className="h-4 w-4 shrink-0" />
+              {!collapsed && <span className="truncate">{item.label}</span>}
+            </Link>
+          );
+        })}
+      </nav>
+      <BloodTubeScroll scrollRef={navRef} />
+    </div>
   );
 }
 

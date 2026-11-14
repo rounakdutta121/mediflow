@@ -679,3 +679,129 @@
     break-inside: avoid;
   }
 }
+
+/* Sidebar: glass tube + blood fill scrollbar */
+.sidebar-nav-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar-nav-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.sidebar-blood-tube {
+  position: absolute;
+  top: 12px;
+  right: 5px;
+  bottom: 12px;
+  z-index: 2;
+  width: 9px;
+  cursor: pointer;
+  touch-action: none;
+  border-radius: 999px;
+  outline: none;
+  isolation: isolate;
+}
+
+.sidebar-blood-tube:focus-visible {
+  box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.55);
+}
+
+.sidebar-blood-tube__glass {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.14) 0%,
+      rgba(255, 255, 255, 0.03) 38%,
+      rgba(0, 0, 0, 0.28) 100%
+    ),
+    rgba(8, 14, 24, 0.72);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+    inset 2px 0 4px rgba(255, 255, 255, 0.12),
+    inset -2px 0 5px rgba(0, 0, 0, 0.45),
+    0 0 10px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+.sidebar-blood-fill {
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  bottom: 1px;
+  max-height: calc(100% - 2px);
+  border-radius: 999px;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      180deg,
+      #ff4d5a 0%,
+      #c81e2e 38%,
+      #8b000f 72%,
+      #5c0010 100%
+    );
+  box-shadow:
+    0 0 10px rgba(220, 38, 38, 0.45),
+    inset 0 0 6px rgba(255, 120, 120, 0.35);
+  transition: height 120ms ease-out;
+  pointer-events: none;
+}
+
+.sidebar-blood-fill--instant {
+  transition: none;
+}
+
+.sidebar-blood-fill__meniscus {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+  border-radius: 50% 50% 40% 40% / 70% 70% 30% 30%;
+  background: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(255, 170, 170, 0.55) 0%,
+    rgba(200, 30, 46, 0.2) 55%,
+    transparent 70%
+  );
+  box-shadow: 0 2px 4px rgba(90, 0, 10, 0.35);
+}
+
+.sidebar-blood-fill__shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.28) 0%,
+    transparent 32%,
+    transparent 68%,
+    rgba(0, 0, 0, 0.22) 100%
+  );
+  opacity: 0.85;
+}
+
+@keyframes sidebar-blood-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 8px rgba(220, 38, 38, 0.35),
+      inset 0 0 6px rgba(255, 120, 120, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 14px rgba(248, 113, 113, 0.55),
+      inset 0 0 8px rgba(255, 160, 160, 0.4);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sidebar-blood-fill {
+    animation: sidebar-blood-pulse 2.8s ease-in-out infinite;
+  }
+}
