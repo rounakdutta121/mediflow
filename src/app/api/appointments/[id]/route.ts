@@ -2,6 +2,7 @@ import { Appointment } from "@/models";
 import { ApiError, jsonError, jsonOk, requireSession } from "@/lib/api";
 import { writeAudit } from "@/lib/audit";
 import { notify } from "@/lib/notifications";
+import { archiveAppointment } from "@/lib/record-archive";
 
 export async function PATCH(
   req: Request,
@@ -62,32 +63,30 @@ export async function DELETE(
     const session = await requireSession("appointments:write");
     const { id } = await params;
 
-    const appointment = await Appointment.findOneAndDelete({
-      _id: id,
-      hospitalId: session.user.hospitalId,
-    });
-    if (!appointment) throw new ApiError("Appointment not found", 404);
+    const archived = await archiveAppointment(id, session.user.hospitalId);
+    if (!archived) throw new ApiError("Appointment not found", 404);
 
     await writeAudit({
       hospitalId: session.user.hospitalId,
       actorId: session.user.id,
       actorEmail: session.user.email,
-      action: "delete",
+      action: "archive",
       resource: "appointment",
       resourceId: id,
+      details: { softArchive: true },
     });
 
     await notify({
       hospitalId: session.user.hospitalId,
-      title: "Appointment deleted",
-      message: `An appointment was removed by ${session.user.name}`,
+      title: "Appointment archived",
+      message: `Appointment removed from the board — kept in Hospital records`,
       type: "appointment",
-      href: "/appointments",
+      href: "/records?tab=appointments",
       targetRoles: ["RECEPTIONIST", "DOCTOR"],
       actorId: session.user.id,
     });
 
-    return jsonOk({ ok: true });
+    return jsonOk({ ok: true, archived: true });
   } catch (error) {
     return jsonError(error);
   }

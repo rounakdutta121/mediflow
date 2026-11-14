@@ -23,6 +23,9 @@ export interface IAppointment {
   notes?: string;
   tokenNumber?: number;
   checkedInAt?: Date;
+  /** Soft-removed from appointments board; kept in Hospital records */
+  isArchived?: boolean;
+  archivedAt?: Date;
   createdBy?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -62,6 +65,8 @@ const AppointmentSchema = new Schema<IAppointment>(
     notes: String,
     tokenNumber: Number,
     checkedInAt: Date,
+    isArchived: { type: Boolean, default: false },
+    archivedAt: Date,
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
@@ -71,6 +76,7 @@ AppointmentSchema.index({ hospitalId: 1, scheduledAt: 1 });
 AppointmentSchema.index({ doctorId: 1, scheduledAt: 1 });
 AppointmentSchema.index({ patientId: 1, scheduledAt: -1 });
 AppointmentSchema.index({ hospitalId: 1, status: 1, scheduledAt: 1 });
+AppointmentSchema.index({ hospitalId: 1, isArchived: 1, scheduledAt: -1 });
 
 export const Appointment =
   models.Appointment || model<IAppointment>("Appointment", AppointmentSchema);

@@ -13,9 +13,11 @@ export async function GET(req: Request) {
     const date = searchParams.get("date");
     const view = searchParams.get("view");
 
+    const includeArchived = searchParams.get("includeArchived") === "1";
     const filter: Record<string, unknown> = {
       hospitalId: session.user.hospitalId,
     };
+    if (!includeArchived) filter.isArchived = { $ne: true };
 
     if (status) filter.status = status;
     if (doctorId) filter.doctorId = doctorId;

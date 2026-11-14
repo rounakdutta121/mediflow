@@ -22,6 +22,7 @@ export default async function AppointmentsPage({
 
   const filter: Record<string, unknown> = {
     hospitalId: session.user.hospitalId,
+    isArchived: { $ne: true },
   };
 
   if (historyView) {

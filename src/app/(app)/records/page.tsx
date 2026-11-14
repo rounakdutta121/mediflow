@@ -95,7 +95,7 @@ export default async function RecordsPage({
     <div>
       <PageHeader
         title="Hospital records"
-        description="Historical patients, appointments, invoices (including partial payments), payments, and admissions"
+        description="Permanent hospital history — archived patients, appointments, invoices, and payments stay here even after removal from operational screens"
       />
 
       <div className="mb-4 flex flex-wrap gap-2">
@@ -161,7 +161,9 @@ export default async function RecordsPage({
       {tab === "appointments" && canAppointments && (
         <Card>
           <CardHeader>
-            <CardTitle>Appointment history</CardTitle>
+            <CardTitle>
+              Appointment history (including archived — never permanently deleted)
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <TableScroll className="border-0 shadow-none rounded-none">
@@ -194,6 +196,11 @@ export default async function RecordsPage({
                       <td>{doctor?.name || "—"}</td>
                       <td>
                         <StatusBadge status={a.status} />
+                        {a.isArchived && (
+                          <span className="ml-2 text-xs text-[var(--muted)]">
+                            archived
+                          </span>
+                        )}
                       </td>
                       <td>{a.tokenNumber ?? "—"}</td>
                     </tr>
@@ -209,7 +216,7 @@ export default async function RecordsPage({
         <Card>
           <CardHeader>
             <CardTitle>
-              Invoice history (issued, partially paid, paid, cancelled)
+              Invoice history (including archived — never permanently deleted)
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -248,6 +255,11 @@ export default async function RecordsPage({
                       <td>{formatCurrency(inv.balance)}</td>
                       <td>
                         <StatusBadge status={inv.status} />
+                        {inv.isArchived && (
+                          <span className="ml-2 text-xs text-[var(--muted)]">
+                            archived
+                          </span>
+                        )}
                       </td>
                       <td>
                         <Button asChild size="sm" variant="ghost">

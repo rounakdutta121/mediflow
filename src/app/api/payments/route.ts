@@ -17,6 +17,9 @@ export async function POST(req: Request) {
       hospitalId: session.user.hospitalId,
     });
     if (!invoice) throw new ApiError("Invoice not found", 404);
+    if (invoice.isArchived) {
+      throw new ApiError("Cannot pay an archived invoice");
+    }
     if (invoice.status === "cancelled") {
       throw new ApiError("Cannot pay a cancelled invoice");
     }

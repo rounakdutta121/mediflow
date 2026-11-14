@@ -15,6 +15,7 @@ export async function GET(req: Request) {
 
     const filter: Record<string, unknown> = {
       hospitalId: session.user.hospitalId,
+      isArchived: { $ne: true },
       scheduledAt: { $gte: start, $lte: end },
       status: { $in: ["scheduled", "confirmed", "checked_in", "in_consultation"] },
     };

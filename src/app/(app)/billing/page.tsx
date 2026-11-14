@@ -17,6 +17,7 @@ export default async function BillingPage({
 
   const filter: Record<string, unknown> = {
     hospitalId: session.user.hospitalId,
+    isArchived: { $ne: true },
   };
   if (status && status !== "all") filter.status = status;
 

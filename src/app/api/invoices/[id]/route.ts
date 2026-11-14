@@ -1,7 +1,8 @@
-import { Invoice, Payment, Prescription } from "@/models";
+import { Invoice, Payment } from "@/models";
 import { ApiError, jsonError, jsonOk, requireSession } from "@/lib/api";
 import { writeAudit } from "@/lib/audit";
 import { notify } from "@/lib/notifications";
+import { archiveInvoice } from "@/lib/record-archive";
 
 export async function GET(
   _req: Request,
@@ -36,47 +37,33 @@ export async function DELETE(
     const session = await requireSession("billing:write");
     const { id } = await params;
 
-    const invoice = await Invoice.findOne({
-      _id: id,
-      hospitalId: session.user.hospitalId,
-    });
-    if (!invoice) throw new ApiError("Invoice not found", 404);
-
-    const invoiceNumber = invoice.invoiceNumber;
-
-    await Promise.all([
-      Payment.deleteMany({ invoiceId: invoice._id }),
-      Prescription.updateMany(
-        { invoiceId: invoice._id },
-        { $unset: { invoiceId: 1 } }
-      ),
-      Invoice.deleteOne({
-        _id: invoice._id,
-        hospitalId: session.user.hospitalId,
-      }),
-    ]);
+    const archived = await archiveInvoice(id, session.user.hospitalId);
+    if (!archived) throw new ApiError("Invoice not found", 404);
 
     await writeAudit({
       hospitalId: session.user.hospitalId,
       actorId: session.user.id,
       actorEmail: session.user.email,
-      action: "delete",
+      action: "archive",
       resource: "invoice",
       resourceId: id,
-      details: { invoiceNumber, hardDelete: true },
+      details: {
+        invoiceNumber: archived.invoiceNumber,
+        softArchive: true,
+      },
     });
 
     await notify({
       hospitalId: session.user.hospitalId,
-      title: "Invoice deleted",
-      message: `${invoiceNumber} was permanently deleted`,
+      title: "Invoice archived",
+      message: `${archived.invoiceNumber} removed from billing — kept in Hospital records`,
       type: "billing",
-      href: "/billing",
+      href: "/records?tab=invoices",
       targetRoles: ["ACCOUNTANT", "RECEPTIONIST"],
       actorId: session.user.id,
     });
 
-    return jsonOk({ ok: true, invoiceNumber });
+    return jsonOk({ ok: true, archived: true, invoiceNumber: archived.invoiceNumber });
   } catch (error) {
     return jsonError(error);
   }

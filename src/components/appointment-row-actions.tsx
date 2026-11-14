@@ -20,7 +20,7 @@ export function AppointmentRowActions({
         <DeleteButton
           endpoint={`/api/appointments/${id}`}
           label=""
-          confirmMessage="Delete this appointment?"
+          confirmMessage="Remove this appointment from the board? It will stay in Hospital records."
           variant="ghost"
         />
       )}

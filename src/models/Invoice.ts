@@ -26,6 +26,9 @@ export interface IInvoice {
   status: "draft" | "issued" | "partially_paid" | "paid" | "cancelled";
   notes?: string;
   issuedAt?: Date;
+  /** Soft-removed from billing UI; kept forever in Hospital records */
+  isArchived?: boolean;
+  archivedAt?: Date;
   createdBy?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -61,6 +64,8 @@ const InvoiceSchema = new Schema<IInvoice>(
     },
     notes: String,
     issuedAt: { type: Date, default: Date.now },
+    isArchived: { type: Boolean, default: false },
+    archivedAt: Date,
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
@@ -68,6 +73,7 @@ const InvoiceSchema = new Schema<IInvoice>(
 
 InvoiceSchema.index({ hospitalId: 1, invoiceNumber: 1 }, { unique: true });
 InvoiceSchema.index({ patientId: 1, createdAt: -1 });
+InvoiceSchema.index({ hospitalId: 1, isArchived: 1, createdAt: -1 });
 
 export const Invoice =
   models.Invoice || model<IInvoice>("Invoice", InvoiceSchema);

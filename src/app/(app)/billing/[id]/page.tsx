@@ -40,6 +40,7 @@ export default async function InvoiceDetailPage({
 
   const payments = await Payment.find({ invoiceId: id }).sort({ paidAt: -1 }).lean();
   const canWrite = hasPermission(session.user.role as Role, "billing:write");
+  const isArchived = Boolean(invoice.isArchived);
   const patient = invoice.patientId as unknown as {
     firstName: string;
     lastName: string;
@@ -65,22 +66,36 @@ export default async function InvoiceDetailPage({
           </Button>
           <PageHeader
             title={invoice.invoiceNumber}
-            description={`${patient.firstName} ${patient.lastName} · ${patient.uhid} · Print-ready hospital bill`}
+            description={`${patient.firstName} ${patient.lastName} · ${patient.uhid} · Print-ready hospital bill${
+              isArchived ? " · Archived (Hospital records)" : ""
+            }`}
           />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <PrintButton />
-          {canWrite && (
+          {canWrite && !isArchived && (
             <DeleteButton
               endpoint={`/api/invoices/${id}`}
-              label="Delete invoice"
-              confirmMessage="Permanently delete this invoice and its payments from the database?"
+              label="Remove from billing"
+              confirmMessage="Remove this invoice from Billing? It will stay in Hospital records with its payments."
               redirectTo="/billing"
               variant="danger"
             />
           )}
+          {isArchived && (
+            <Button asChild size="sm" variant="outline">
+              <Link href="/records?tab=invoices">View in Hospital records</Link>
+            </Button>
+          )}
         </div>
       </div>
+
+      {isArchived && (
+        <div className="no-print mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-[var(--foreground)]">
+          This invoice is archived. It is hidden from the Billing list but kept
+          permanently in Hospital records (including payment history).
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(18rem,0.85fr)]">
         <InvoiceDocument
@@ -186,7 +201,10 @@ export default async function InvoiceDetailPage({
             </CardContent>
           </Card>
 
-          {canWrite && invoice.balance > 0 && invoice.status !== "cancelled" && (
+          {canWrite &&
+            !isArchived &&
+            invoice.balance > 0 &&
+            invoice.status !== "cancelled" && (
             <CollectPaymentForm
               invoiceId={String(invoice._id)}
               balance={invoice.balance}

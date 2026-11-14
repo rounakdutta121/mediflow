@@ -47,6 +47,7 @@ export default async function DashboardPage() {
     Appointment.countDocuments({
       hospitalId,
       ...doctorFilter,
+      isArchived: { $ne: true },
       scheduledAt: { $gte: todayStart, $lte: todayEnd },
       status: { $nin: ["cancelled"] },
     }),
@@ -59,6 +60,7 @@ export default async function DashboardPage() {
       {
         $match: {
           hospitalId: hospitalObjectId,
+          isArchived: { $ne: true },
           status: { $in: ["issued", "partially_paid"] },
         },
       },
@@ -76,6 +78,7 @@ export default async function DashboardPage() {
     Appointment.find({
       hospitalId,
       ...doctorFilter,
+      isArchived: { $ne: true },
       scheduledAt: { $gte: todayStart, $lte: todayEnd },
     })
       .populate("patientId", "uhid firstName lastName")

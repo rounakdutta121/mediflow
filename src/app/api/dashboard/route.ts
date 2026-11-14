@@ -33,12 +33,14 @@ export async function GET() {
       Appointment.countDocuments({
         hospitalId,
         ...doctorFilter,
+        isArchived: { $ne: true },
         scheduledAt: { $gte: todayStart, $lte: todayEnd },
         status: { $nin: ["cancelled"] },
       }),
       Appointment.countDocuments({
         hospitalId,
         ...doctorFilter,
+        isArchived: { $ne: true },
         scheduledAt: { $gte: todayStart, $lte: todayEnd },
         status: { $in: ["checked_in", "in_consultation"] },
       }),
@@ -53,6 +55,7 @@ export async function GET() {
             hospitalId: new (await import("mongoose")).default.Types.ObjectId(
               hospitalId
             ),
+            isArchived: { $ne: true },
             status: { $in: ["issued", "partially_paid"] },
           },
         },
@@ -72,6 +75,7 @@ export async function GET() {
       Appointment.find({
         hospitalId,
         ...doctorFilter,
+        isArchived: { $ne: true },
         scheduledAt: { $gte: todayStart, $lte: todayEnd },
       })
         .populate("patientId", "uhid firstName lastName")
