@@ -71,9 +71,21 @@ const guides = [
     linkLabel: "Create invoice",
     steps: [
       "Billing → Create invoice: choose patient and add catalogue services.",
-      "Apply discount if needed, then save.",
-      "Open the invoice and collect payment (cash/card/UPI as available).",
+      "Set tax % per line (or use service default from Settings).",
+      "Open the invoice to print/PDF and collect payment.",
       "Status moves issued → partially paid → paid; dues show on the dashboard.",
+    ],
+  },
+  {
+    title: "Admission & beds (IPD)",
+    when: "Admit an inpatient / manage beds",
+    href: "/admissions",
+    linkLabel: "Open admissions",
+    steps: [
+      "Open Admission & Beds to see the ward bed board.",
+      "Admit patient: pick patient + available bed (or Admit here on a free bed).",
+      "Transfer moves the patient to another free bed; discharge frees the bed.",
+      "Roles with admission:write: Admin, Reception, Doctor, Nurse.",
     ],
   },
   {

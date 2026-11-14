@@ -40,6 +40,7 @@ export async function bumpLive(
       revalidatePath("/settings");
       revalidatePath("/staff");
       revalidatePath("/departments");
+      revalidatePath("/admissions");
     } catch {
       // revalidatePath can throw outside a request context; bump still counts.
     }

@@ -15,6 +15,9 @@ async function main() {
   const { Department } = await import("../src/models/Department");
   const { DoctorSchedule } = await import("../src/models/DoctorSchedule");
   const { Service } = await import("../src/models/Service");
+  const { Ward } = await import("../src/models/Ward");
+  const { Bed } = await import("../src/models/Bed");
+  const { Admission } = await import("../src/models/Admission");
   const { Counter } = await import("../src/models/Counter");
 
   await Promise.all([
@@ -23,6 +26,9 @@ async function main() {
     Department.deleteMany({}),
     DoctorSchedule.deleteMany({}),
     Service.deleteMany({}),
+    Ward.deleteMany({}),
+    Bed.deleteMany({}),
+    Admission.deleteMany({}),
     Counter.deleteMany({}),
   ]);
 
@@ -101,6 +107,16 @@ async function main() {
     employeeCode: "ACC-001",
   });
 
+  const nursePassword = await bcrypt.hash("Nurse@12345", 10);
+  await User.create({
+    hospitalId: hospital._id,
+    email: "nurse@mediflow.local",
+    passwordHash: nursePassword,
+    name: "Sunita Nair",
+    role: "NURSE",
+    employeeCode: "NUR-001",
+  });
+
   for (const doctor of doctors) {
     for (const day of [1, 2, 3, 4, 5, 6]) {
       await DoctorSchedule.create({
@@ -159,9 +175,67 @@ async function main() {
     },
   ]);
 
+  const wards = await Ward.insertMany([
+    {
+      hospitalId: hospital._id,
+      name: "General Ward A",
+      code: "GWA",
+      floor: "2",
+      genderPolicy: "mixed",
+    },
+    {
+      hospitalId: hospital._id,
+      name: "ICU",
+      code: "ICU",
+      floor: "3",
+      genderPolicy: "mixed",
+    },
+    {
+      hospitalId: hospital._id,
+      name: "Private Wing",
+      code: "PVT",
+      floor: "4",
+      genderPolicy: "mixed",
+    },
+  ]);
+
+  const bedDocs = [];
+  for (let i = 1; i <= 8; i++) {
+    bedDocs.push({
+      hospitalId: hospital._id,
+      wardId: wards[0]._id,
+      bedNumber: String(i).padStart(2, "0"),
+      bedType: "general",
+      status: "available",
+    });
+  }
+  for (let i = 1; i <= 4; i++) {
+    bedDocs.push({
+      hospitalId: hospital._id,
+      wardId: wards[1]._id,
+      bedNumber: `ICU-${i}`,
+      bedType: "icu",
+      status: "available",
+    });
+  }
+  for (let i = 1; i <= 4; i++) {
+    bedDocs.push({
+      hospitalId: hospital._id,
+      wardId: wards[2]._id,
+      bedNumber: `P${i}`,
+      bedType: "private",
+      status: "available",
+    });
+  }
+  await Bed.insertMany(bedDocs);
+
   await Counter.create({ _id: `uhid:${hospital._id.toString()}`, seq: 1000 });
   await Counter.create({ _id: `invoice:${hospital._id.toString()}`, seq: 1000 });
   await Counter.create({ _id: `receipt:${hospital._id.toString()}`, seq: 1000 });
+  await Counter.create({
+    _id: `admission:${hospital._id.toString()}`,
+    seq: 1000,
+  });
 
   console.log("Seed complete");
   console.log("Hospital:", hospital.name);
@@ -169,6 +243,8 @@ async function main() {
   console.log("Doctor: dr.mehta@mediflow.local / Doctor@12345");
   console.log("Reception: reception@mediflow.local / Reception@12345");
   console.log("Accounts: accounts@mediflow.local / Accounts@12345");
+  console.log("Nurse: nurse@mediflow.local / Nurse@12345");
+  console.log(`Wards: ${wards.length}, Beds: ${bedDocs.length}`);
 
   await mongoose.disconnect();
 }

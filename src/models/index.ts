@@ -11,4 +11,7 @@ export { Invoice } from "./Invoice";
 export { Payment } from "./Payment";
 export { AuditLog } from "./AuditLog";
 export { Notification } from "./Notification";
+export { Ward } from "./Ward";
+export { Bed } from "./Bed";
+export { Admission } from "./Admission";
 export { Counter, getNextSequence } from "./Counter";

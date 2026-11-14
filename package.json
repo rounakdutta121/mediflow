@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "tsx --env-file=.env.local scripts/seed.ts",
+    "seed:admissions": "tsx --env-file=.env.local scripts/seed-admissions.ts",
     "test:e2e": "node scripts/e2e-frontend.mjs",
     "test:rbac": "node scripts/rbac-matrix.mjs",
     "test:ui": "node scripts/e2e-ui-redesign.mjs",

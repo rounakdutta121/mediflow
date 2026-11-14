@@ -46,6 +46,7 @@ const mainNav: NavItem[] = [
   { href: "/appointments", label: "Appointments", icon: CalendarDays, permission: "appointments:read" },
   { href: "/queue", label: "Queue", icon: ListOrdered, permission: "queue:manage" },
   { href: "/clinical", label: "Clinical / EMR", icon: Stethoscope, permission: "clinical:read" },
+  { href: "/admissions", label: "Admission & Beds", icon: BedDouble, permission: "admission:read" },
   { href: "/billing", label: "Billing", icon: Receipt, permission: "billing:read" },
   { href: "/staff", label: "Doctors & Staff", icon: UserCog, permission: "staff:read" },
   { href: "/departments", label: "Departments", icon: Building2, permission: "departments:read" },
@@ -56,7 +57,6 @@ const mainNav: NavItem[] = [
 ];
 
 const laterNav: NavItem[] = [
-  { href: "/coming-soon/admission", label: "Admission & Beds", icon: BedDouble, comingSoon: true },
   { href: "/coming-soon/laboratory", label: "Laboratory", icon: FlaskConical, comingSoon: true },
   { href: "/coming-soon/pharmacy", label: "Pharmacy", icon: Pill, comingSoon: true },
   { href: "/coming-soon/insurance", label: "Insurance", icon: FileText, comingSoon: true },

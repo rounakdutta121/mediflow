@@ -244,9 +244,12 @@ bullet([
   "Operational dashboard, MTD reports, hospital settings, Help guide",
   "Light/dark theme, responsive UI, mobile sidebar",
 ]);
+h2("Phase 2 includes");
+bullet([
+  "Admission & Beds — wards, bed board, admit / transfer / discharge",
+]);
 h2("Later phases (navigation shells only)");
 bullet([
-  "Admission & Beds",
   "Laboratory",
   "Pharmacy",
   "Insurance / TPA",
@@ -463,7 +466,7 @@ bullet([
 h1("8. Support & scope notes");
 bullet([
   "Phase 1 is single-hospital OPD-focused CRM/ERP foundation.",
-  "Admission, lab, pharmacy, insurance, and nursing are placeholders for later phases.",
+  "Phase 2 adds Admission & Beds (IPD). Lab, pharmacy, insurance, and nursing remain later-phase placeholders.",
   "Soft-delete is used for many entities (e.g. patients marked inactive via Delete in UI).",
   "For demos, keep seeded credentials handy; rotate them for any shared public deployment.",
 ]);

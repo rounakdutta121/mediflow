@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import {
+  Admission,
   Appointment,
+  Bed,
   Encounter,
   Invoice,
   Patient,
@@ -15,11 +17,12 @@ export type CascadeDeleteResult = {
   prescriptions: number;
   invoices: number;
   payments: number;
+  admissions: number;
   patientDeleted: boolean;
 };
 
 /**
- * Hard-delete a patient and all linked clinical/front-office/billing records.
+ * Hard-delete a patient and all linked clinical/front-office/billing/IPD records.
  * Queue tokens live on appointments, so removing appointments clears queue too.
  */
 export async function deletePatientCascade(
@@ -43,14 +46,36 @@ export async function deletePatientCascade(
     await Invoice.find({ patientId: patientObjectId }).select("_id").lean()
   ).map((i) => i._id);
 
-  const [appointments, encounters, prescriptions, payments, invoices] =
+  const activeAdmissions = await Admission.find({
+    patientId: patientObjectId,
+    status: "admitted",
+  })
+    .select("bedId")
+    .lean();
+
+  if (activeAdmissions.length) {
+    await Bed.updateMany(
+      {
+        _id: { $in: activeAdmissions.map((a) => a.bedId) },
+        hospitalId: hospitalObjectId,
+      },
+      {
+        $set: { status: "available" },
+        $unset: { currentAdmissionId: 1 },
+      }
+    );
+  }
+
+  const [appointments, encounters, prescriptions, payments, invoices, admissions] =
     await Promise.all([
       Appointment.deleteMany({ patientId: patientObjectId }),
       Encounter.deleteMany({ patientId: patientObjectId }),
       Prescription.deleteMany({
         $or: [
           { patientId: patientObjectId },
-          ...(encounterIds.length ? [{ encounterId: { $in: encounterIds } }] : []),
+          ...(encounterIds.length
+            ? [{ encounterId: { $in: encounterIds } }]
+            : []),
         ],
       }),
       Payment.deleteMany({
@@ -60,6 +85,7 @@ export async function deletePatientCascade(
         ],
       }),
       Invoice.deleteMany({ patientId: patientObjectId }),
+      Admission.deleteMany({ patientId: patientObjectId }),
     ]);
 
   await Patient.deleteOne({ _id: patientObjectId, hospitalId: hospitalObjectId });
@@ -71,6 +97,7 @@ export async function deletePatientCascade(
     prescriptions: prescriptions.deletedCount || 0,
     invoices: invoices.deletedCount || 0,
     payments: payments.deletedCount || 0,
+    admissions: admissions.deletedCount || 0,
     patientDeleted: true,
   };
 }
@@ -93,7 +120,25 @@ export async function cleanupOrphanPatientData(hospitalId?: string) {
   const orphanInvoices = await Invoice.find(orphanFilter).select("_id").lean();
   const orphanInvoiceIds = orphanInvoices.map((i) => i._id);
 
-  const [appointments, encounters, prescriptions, payments, invoices] =
+  const orphanAdmissions = await Admission.find(orphanFilter)
+    .select("bedId")
+    .lean();
+  if (orphanAdmissions.length) {
+    await Bed.updateMany(
+      {
+        _id: { $in: orphanAdmissions.map((a) => a.bedId) },
+        ...(hospitalId
+          ? { hospitalId: new mongoose.Types.ObjectId(hospitalId) }
+          : {}),
+      },
+      {
+        $set: { status: "available" },
+        $unset: { currentAdmissionId: 1 },
+      }
+    );
+  }
+
+  const [appointments, encounters, prescriptions, payments, invoices, admissions] =
     await Promise.all([
       Appointment.deleteMany(orphanFilter),
       Encounter.deleteMany(orphanFilter),
@@ -107,6 +152,7 @@ export async function cleanupOrphanPatientData(hospitalId?: string) {
         ],
       }),
       Invoice.deleteMany(orphanFilter),
+      Admission.deleteMany(orphanFilter),
     ]);
 
   return {
@@ -115,5 +161,6 @@ export async function cleanupOrphanPatientData(hospitalId?: string) {
     prescriptions: prescriptions.deletedCount || 0,
     invoices: invoices.deletedCount || 0,
     payments: payments.deletedCount || 0,
+    admissions: admissions.deletedCount || 0,
   };
 }

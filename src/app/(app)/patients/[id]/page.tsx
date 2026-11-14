@@ -32,6 +32,7 @@ export default async function PatientDetailPage({
   const canBook = hasPermission(role, "appointments:write");
   const canClinical = hasPermission(role, "clinical:write");
   const canBill = hasPermission(role, "billing:write");
+  const canAdmit = hasPermission(role, "admission:write");
 
   const [appointments, encounters, invoices] = await Promise.all([
     Appointment.find({ patientId: id })
@@ -59,7 +60,7 @@ export default async function PatientDetailPage({
             <DeleteButton
               endpoint={`/api/patients/${id}`}
               label="Delete patient"
-              confirmMessage="Permanently delete this patient and all related appointments, queue tokens, encounters, prescriptions, invoices, and payments?"
+              confirmMessage="Permanently delete this patient and all related appointments, queue tokens, encounters, prescriptions, invoices, payments, and admissions?"
               redirectTo="/patients"
               variant="danger"
             />
@@ -68,6 +69,13 @@ export default async function PatientDetailPage({
             <Button asChild variant="secondary" size="sm">
               <Link href={`/appointments/new?patientId=${id}`}>
                 Book appointment
+              </Link>
+            </Button>
+          )}
+          {canAdmit && (
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/admissions/new?patientId=${id}`}>
+                Admit patient
               </Link>
             </Button>
           )}

@@ -1,4 +1,4 @@
-# MediFlow — Hospital ERP + CRM (Phase 1 MVP)
+# MediFlow — Hospital ERP + CRM (Phase 1 + Admission & Beds)
 
 Next.js + MongoDB hospital operations platform. Vercel-deployable single-hospital foundation covering auth/RBAC, patients, appointments/queue, basic EMR, billing, audit, and dashboards.
 
@@ -57,7 +57,8 @@ Open [http://localhost:3000](http://localhost:3000).
 - Encounter notes, diagnosis, signed prescriptions
 - Service catalogue, invoices, payments/receipts
 - Operational dashboard + MTD reports
-- Later-phase modules shown as navigation shells only
+- Phase 2: Admission & Beds (wards, bed board, admit / transfer / discharge)
+- Later-phase modules (lab, pharmacy, insurance, nursing) shown as navigation shells only
 
 ## Vercel deployment
 
@@ -86,7 +87,8 @@ MONGODB_URI="your-atlas-uri" npm run seed
 - `npm run dev` — development server
 - `npm run build` — production build
 - `npm run start` — start production server
-- `npm run seed` — seed hospital, users, departments, services
+- `npm run seed` — seed hospital, users, departments, services, wards/beds
+- `npm run seed:admissions` — idempotent wards/beds/nurse seed (keeps existing data)
 - `npm run lint` — ESLint
 - `npm run test:rbac` — live RBAC matrix (dev server required)
 - `npm run test:ui` — UI smoke (Playwright; browsers on `PLAYWRIGHT_BROWSERS_PATH`)

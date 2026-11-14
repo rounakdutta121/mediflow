@@ -105,6 +105,7 @@ export async function DELETE(
           prescriptions: cascade.prescriptions,
           invoices: cascade.invoices,
           payments: cascade.payments,
+          admissions: cascade.admissions,
         },
       },
     });
