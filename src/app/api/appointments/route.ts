@@ -11,6 +11,7 @@ export async function GET(req: Request) {
     const status = searchParams.get("status");
     const doctorId = searchParams.get("doctorId");
     const date = searchParams.get("date");
+    const view = searchParams.get("view");
 
     const filter: Record<string, unknown> = {
       hospitalId: session.user.hospitalId,
@@ -21,7 +22,12 @@ export async function GET(req: Request) {
     if (session.user.role === "DOCTOR") {
       filter.doctorId = session.user.id;
     }
-    if (date) {
+    if (view === "history") {
+      const start = new Date();
+      start.setDate(start.getDate() - 90);
+      start.setHours(0, 0, 0, 0);
+      filter.scheduledAt = { $gte: start };
+    } else if (date) {
       const start = new Date(date);
       start.setHours(0, 0, 0, 0);
       const end = new Date(date);
@@ -34,7 +40,7 @@ export async function GET(req: Request) {
         .populate("patientId", "uhid firstName lastName phone")
         .populate("doctorId", "name specialization")
         .populate("departmentId", "name code")
-        .sort({ scheduledAt: 1 })
+        .sort({ scheduledAt: view === "history" ? -1 : 1 })
         .skip(skip)
         .limit(limit)
         .lean(),

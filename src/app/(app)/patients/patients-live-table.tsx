@@ -7,9 +7,11 @@ import { useLiveReload } from "@/hooks/use-live-reload";
 export function PatientsLiveTable({
   initialRows,
   q,
+  status = "active",
 }: {
   initialRows: PatientRow[];
   q?: string;
+  status?: string;
 }) {
   const [rows, setRows] = useState(initialRows);
 
@@ -18,7 +20,7 @@ export function PatientsLiveTable({
   }, [initialRows]);
 
   const reload = useCallback(async () => {
-    const params = new URLSearchParams({ limit: "50" });
+    const params = new URLSearchParams({ limit: "50", status });
     if (q) params.set("q", q);
     const res = await fetch(`/api/patients?${params.toString()}`, {
       cache: "no-store",
@@ -46,7 +48,7 @@ export function PatientsLiveTable({
         createdAt: p.createdAt,
       }))
     );
-  }, [q]);
+  }, [q, status]);
 
   useLiveReload(reload);
 

@@ -46,7 +46,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await requireSession("admission:write");
+    const session = await requireSession("beds:manage");
     const body = await req.json();
     if (!body.wardId || !body.bedNumber) {
       return jsonError(new Error("wardId and bedNumber are required"));

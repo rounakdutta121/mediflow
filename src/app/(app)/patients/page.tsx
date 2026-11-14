@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { connectDB } from "@/lib/db";
 import { Patient } from "@/models";
 import { PageHeader } from "@/components/page-header";
@@ -12,16 +13,19 @@ import { PatientsLiveTable } from "./patients-live-table";
 export default async function PatientsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; status?: string }>;
 }) {
   const session = await requirePagePermission("patients:read");
-  const { q } = await searchParams;
+  const { q, status: rawStatus } = await searchParams;
   await connectDB();
 
+  const status = rawStatus === "archived" || rawStatus === "all" ? rawStatus : "active";
   const filter: Record<string, unknown> = {
     hospitalId: session.user.hospitalId,
-    isActive: true,
   };
+  if (status === "active") filter.isActive = true;
+  else if (status === "archived") filter.isActive = false;
+
   if (q) {
     filter.$or = [
       { firstName: new RegExp(q, "i") },
@@ -42,13 +46,14 @@ export default async function PatientsPage({
     phone: p.phone,
     gender: p.gender || "unknown",
     createdAt: new Date(p.createdAt).toISOString(),
+    isActive: p.isActive !== false,
   }));
 
   return (
     <FadeIn>
       <PageHeader
         title="Patients"
-        description="Registration, UHID and patient CRM profiles"
+        description="Registration, UHID and patient CRM profiles — archive keeps history"
         action={
           canWrite
             ? { href: "/patients/new", label: "Register patient" }
@@ -57,22 +62,34 @@ export default async function PatientsPage({
       />
 
       <Card className="mb-4">
-        <CardContent className="p-4">
-          <form className="flex flex-col gap-2 sm:flex-row">
+        <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-center">
+          <form className="flex flex-1 flex-col gap-2 sm:flex-row">
             <Input
               name="q"
               defaultValue={q}
               placeholder="Search by name, phone or UHID"
               className="flex-1"
             />
+            <select
+              name="status"
+              defaultValue={status}
+              className="h-10 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--foreground)]"
+            >
+              <option value="active">Active</option>
+              <option value="archived">Archived</option>
+              <option value="all">All</option>
+            </select>
             <Button type="submit" variant="outline" className="sm:w-auto">
               Search
             </Button>
           </form>
+          <Button asChild size="sm" variant="outline">
+            <Link href="/records?tab=patients">Full patient history</Link>
+          </Button>
         </CardContent>
       </Card>
 
-      <PatientsLiveTable initialRows={rows} q={q} />
+      <PatientsLiveTable initialRows={rows} q={q} status={status} />
     </FadeIn>
   );
 }

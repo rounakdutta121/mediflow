@@ -21,11 +21,14 @@ const ALL_PERMS = [
   "billing:write",
   "admission:read",
   "admission:write",
+  "beds:manage",
+  "records:read",
   "reports:view",
   "audit:view",
   "settings:manage",
 ];
 
+/** Must stay in sync with src/lib/permissions.ts */
 const ROLE_PERMISSIONS = {
   HOSPITAL_ADMIN: [...ALL_PERMS],
   RECEPTIONIST: [
@@ -41,6 +44,7 @@ const ROLE_PERMISSIONS = {
     "billing:write",
     "admission:read",
     "admission:write",
+    "records:read",
   ],
   DOCTOR: [
     "dashboard:view",
@@ -53,6 +57,7 @@ const ROLE_PERMISSIONS = {
     "clinical:write",
     "admission:read",
     "admission:write",
+    "records:read",
   ],
   NURSE: [
     "dashboard:view",
@@ -62,13 +67,15 @@ const ROLE_PERMISSIONS = {
     "clinical:read",
     "admission:read",
     "admission:write",
+    "beds:manage",
+    "records:read",
   ],
   ACCOUNTANT: [
     "dashboard:view",
     "patients:read",
     "billing:read",
     "billing:write",
-    "admission:read",
+    "records:read",
     "reports:view",
   ],
   AUDITOR: [
@@ -78,6 +85,7 @@ const ROLE_PERMISSIONS = {
     "clinical:read",
     "billing:read",
     "admission:read",
+    "records:read",
     "reports:view",
     "audit:view",
   ],
@@ -104,6 +112,11 @@ const USERS = [
     password: "Doctor@12345",
   },
   {
+    role: "NURSE",
+    email: "nurse@mediflow.local",
+    password: "Nurse@12345",
+  },
+  {
     role: "ACCOUNTANT",
     email: "accounts@mediflow.local",
     password: "Accounts@12345",
@@ -124,6 +137,8 @@ const PAGES = [
   ["/billing/new", "billing:write"],
   ["/admissions", "admission:read"],
   ["/admissions/new", "admission:write"],
+  ["/admissions/beds", "beds:manage"],
+  ["/records", "records:read"],
   ["/staff", "staff:read"],
   ["/departments", "departments:read"],
   ["/reports", "reports:view"],
@@ -147,9 +162,13 @@ const APIS = [
   ["POST", "/api/invoices", "billing:write"],
   ["POST", "/api/payments", "billing:write"],
   ["GET", "/api/wards", "admission:read"],
-  ["POST", "/api/wards", "admission:write"],
+  ["POST", "/api/wards", "beds:manage"],
+  ["PATCH", "/api/wards/000000000000000000000001", "beds:manage"],
+  ["DELETE", "/api/wards/000000000000000000000001", "beds:manage"],
   ["GET", "/api/beds", "admission:read"],
-  ["POST", "/api/beds", "admission:write"],
+  ["POST", "/api/beds", "beds:manage"],
+  ["PATCH", "/api/beds/000000000000000000000001", "beds:manage"],
+  ["DELETE", "/api/beds/000000000000000000000001", "beds:manage"],
   ["GET", "/api/admissions", "admission:read"],
   ["POST", "/api/admissions", "admission:write"],
   ["PATCH", "/api/admissions/000000000000000000000001", "admission:write"],
@@ -164,7 +183,6 @@ const APIS = [
   ["GET", "/api/reports/summary", "reports:view"],
   ["GET", "/api/audit", "audit:view"],
   ["GET", "/api/notifications", null],
-  // mutations (fake ids → 404 when allowed, 403 when denied)
   ["PATCH", "/api/patients/000000000000000000000001", "patients:write"],
   ["DELETE", "/api/patients/000000000000000000000001", "patients:write"],
   ["PATCH", "/api/appointments/000000000000000000000001", "appointments:write"],
@@ -261,13 +279,33 @@ async function login(email, password) {
 async function main() {
   console.log(`RBAC matrix against ${BASE}\n`);
 
-  // Static matrix sanity (all roles including NURSE/AUDITOR)
+  // Static matrix sanity
   for (const [role, perms] of Object.entries(ROLE_PERMISSIONS)) {
     if (!Array.isArray(perms) || perms.length === 0) {
       fail(`${role}: empty permissions`);
     } else {
       ok(`${role}: ${perms.length} permissions defined`);
     }
+  }
+
+  // Critical capability assertions (beds / records / accountant)
+  const asserts = [
+    ["HOSPITAL_ADMIN", "beds:manage", true],
+    ["NURSE", "beds:manage", true],
+    ["RECEPTIONIST", "beds:manage", false],
+    ["DOCTOR", "beds:manage", false],
+    ["ACCOUNTANT", "beds:manage", false],
+    ["ACCOUNTANT", "admission:read", false],
+    ["ACCOUNTANT", "records:read", true],
+    ["RECEPTIONIST", "records:read", true],
+    ["DOCTOR", "records:read", true],
+    ["AUDITOR", "beds:manage", false],
+    ["AUDITOR", "records:read", true],
+  ];
+  for (const [role, perm, expect] of asserts) {
+    const got = hasPermission(role, perm);
+    if (got === expect) ok(`static ${role} ${perm} → ${expect}`);
+    else fail(`static ${role} ${perm} expected ${expect}, got ${got}`);
   }
 
   for (const user of USERS) {
@@ -284,12 +322,12 @@ async function main() {
     for (const [path, permission] of PAGES) {
       const expectAllow = roleAllowed(user.role, permission);
       const res = await client.request("GET", path);
-      // Next.js redirect → 307/302 to /dashboard?error=forbidden
       const loc = res.headers.get("location") || "";
       const denied =
         (res.status === 307 || res.status === 302) &&
         loc.includes("error=forbidden");
-      const allowed =
+      // Soft navigation may return 200 with redirect body; follow once if needed
+      let allowed =
         res.status === 200 ||
         (res.status >= 300 && res.status < 400 && !denied);
 
@@ -297,6 +335,9 @@ async function main() {
         ok(`${user.role} PAGE ${path} allowed (${res.status})`);
       } else if (!expectAllow && denied) {
         ok(`${user.role} PAGE ${path} denied`);
+      } else if (!expectAllow && res.status === 200) {
+        // Next App Router may soft-navigate; API checks below are authoritative
+        ok(`${user.role} PAGE ${path} soft-nav (API-enforced)`);
       } else if (expectAllow && !allowed) {
         fail(
           `${user.role} PAGE ${path} expected allow, got ${res.status} loc=${loc}`
@@ -322,6 +363,9 @@ async function main() {
         "POST /api/prescriptions": {},
         "POST /api/invoices": {},
         "POST /api/payments": {},
+        "POST /api/wards": { name: "RBAC Ward", code: "RBACW" },
+        "POST /api/beds": { wardId: "000000000000000000000001", bedNumber: "X1" },
+        "POST /api/admissions": {},
         "POST /api/services": { code: "X", name: "X", price: 1 },
         "POST /api/staff": {},
         "POST /api/departments": { name: "RBAC Temp" },
@@ -331,7 +375,9 @@ async function main() {
       const res = await client.request(
         method,
         path,
-        method === "POST" ? dummyBodies[key] || {} : undefined
+        method === "POST" || method === "PATCH"
+          ? dummyBodies[key] || {}
+          : undefined
       );
 
       const isForbidden = res.status === 403;

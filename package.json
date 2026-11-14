@@ -11,6 +11,7 @@
     "seed:admissions": "tsx --env-file=.env.local scripts/seed-admissions.ts",
     "test:e2e": "node scripts/e2e-frontend.mjs",
     "test:rbac": "node scripts/rbac-matrix.mjs",
+    "test:beds-records": "node scripts/smoke-beds-records.mjs",
     "test:ui": "node scripts/e2e-ui-redesign.mjs",
     "test:frontend": "node scripts/e2e-full-frontend.mjs"
   },

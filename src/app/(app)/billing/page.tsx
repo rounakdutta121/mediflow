@@ -6,22 +6,29 @@ import { hasPermission, type Role } from "@/lib/permissions";
 import { requirePagePermission } from "@/lib/page-auth";
 import { BillingLiveTable } from "./billing-live-table";
 
-export default async function BillingPage() {
+export default async function BillingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
   const session = await requirePagePermission("billing:read");
+  const { status } = await searchParams;
   await connectDB();
 
-  const invoices = await Invoice.find({
+  const filter: Record<string, unknown> = {
     hospitalId: session.user.hospitalId,
-  })
+  };
+  if (status && status !== "all") filter.status = status;
+
+  const invoices = await Invoice.find(filter)
     .populate("patientId", "uhid firstName lastName")
     .sort({ createdAt: -1 })
-    .limit(50)
+    .limit(100)
     .lean();
 
   const canWrite = hasPermission(session.user.role as Role, "billing:write");
   const initialRows = invoices.map((inv) => {
     const patient = inv.patientId as unknown as {
-      _id?: { toString(): string } | string;
       firstName?: string;
       lastName?: string;
       uhid?: string;
@@ -31,6 +38,7 @@ export default async function BillingPage() {
       invoiceNumber: inv.invoiceNumber,
       createdAt: new Date(inv.createdAt).toISOString(),
       total: inv.total,
+      amountPaid: inv.amountPaid,
       balance: inv.balance,
       status: inv.status,
       patientId: patient
@@ -47,7 +55,7 @@ export default async function BillingPage() {
     <div>
       <PageHeader
         title="Billing & Payments"
-        description="Hospital invoices, receipts and balances — open any bill to print or save as PDF"
+        description="All invoices including partial payments — filter by status or open Hospital records for full history"
         action={
           canWrite ? { href: "/billing/new", label: "Create invoice" } : undefined
         }
@@ -55,7 +63,10 @@ export default async function BillingPage() {
 
       <Card>
         <CardContent className="p-0">
-          <BillingLiveTable initialRows={initialRows} />
+          <BillingLiveTable
+            initialRows={initialRows}
+            initialStatus={status || "all"}
+          />
         </CardContent>
       </Card>
     </div>

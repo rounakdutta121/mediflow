@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Activity,
+  Archive,
   BedDouble,
   ClipboardList,
   FileText,
@@ -48,6 +49,7 @@ const mainNav: NavItem[] = [
   { href: "/clinical", label: "Clinical / EMR", icon: Stethoscope, permission: "clinical:read" },
   { href: "/admissions", label: "Admission & Beds", icon: BedDouble, permission: "admission:read" },
   { href: "/billing", label: "Billing", icon: Receipt, permission: "billing:read" },
+  { href: "/records", label: "Hospital records", icon: Archive, permission: "records:read" },
   { href: "/staff", label: "Doctors & Staff", icon: UserCog, permission: "staff:read" },
   { href: "/departments", label: "Departments", icon: Building2, permission: "departments:read" },
   { href: "/reports", label: "Reports", icon: BarChart3, permission: "reports:view" },

@@ -38,7 +38,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const session = await requireSession("admission:write");
+    const session = await requireSession("beds:manage");
     const body = await req.json();
     if (!body.name || !body.code) {
       return jsonError(new Error("name and code are required"));

@@ -85,7 +85,20 @@ const guides = [
       "Open Admission & Beds to see the ward bed board.",
       "Admit patient: pick patient + available bed (or Admit here on a free bed).",
       "Transfer moves the patient to another free bed; discharge frees the bed.",
+      "Manage wards & beds (add/edit/remove): Admin and Nurse only — Reception can admit but not change capacity.",
       "Roles with admission:write: Admin, Reception, Doctor, Nurse.",
+    ],
+  },
+  {
+    title: "Hospital records (history)",
+    when: "Look up past invoices, payments, appointments, patients, admissions",
+    href: "/records",
+    linkLabel: "Open hospital records",
+    steps: [
+      "Hospital records keeps history: patients (including archived), appointments, invoices, partial payments, admissions.",
+      "Billing also filters by issued / partially paid / paid / cancelled.",
+      "Appointments has a 90-day history view; archiving a patient keeps linked invoices and visits.",
+      "Most clinical roles can open records; nav hides modules you cannot access.",
     ],
   },
   {
@@ -107,6 +120,7 @@ const demoUsers = [
   ["Doctor", "dr.mehta@mediflow.local", "Doctor@12345"],
   ["Reception", "reception@mediflow.local", "Reception@12345"],
   ["Accounts", "accounts@mediflow.local", "Accounts@12345"],
+  ["Nurse", "nurse@mediflow.local", "Nurse@12345"],
 ];
 
 export default async function HelpPage() {

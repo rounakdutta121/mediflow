@@ -2,7 +2,7 @@ import { Patient } from "@/models";
 import { ApiError, jsonError, jsonOk, requireSession } from "@/lib/api";
 import { writeAudit } from "@/lib/audit";
 import { notify } from "@/lib/notifications";
-import { deletePatientCascade } from "@/lib/patient-cascade";
+import { archivePatient } from "@/lib/patient-archive";
 
 export async function GET(
   _req: Request,
@@ -85,42 +85,38 @@ export async function DELETE(
     const existing = await Patient.findOne({
       _id: id,
       hospitalId: session.user.hospitalId,
+      isActive: true,
     }).lean();
     if (!existing) throw new ApiError("Patient not found", 404);
 
-    const cascade = await deletePatientCascade(id, session.user.hospitalId);
-    if (!cascade) throw new ApiError("Patient not found", 404);
+    const archived = await archivePatient(id, session.user.hospitalId);
+    if (!archived) throw new ApiError("Patient not found", 404);
 
     await writeAudit({
       hospitalId: session.user.hospitalId,
       actorId: session.user.id,
       actorEmail: session.user.email,
-      action: "delete",
+      action: "archive",
       resource: "patient",
       resourceId: id,
       details: {
-        cascade: {
-          appointments: cascade.appointments,
-          encounters: cascade.encounters,
-          prescriptions: cascade.prescriptions,
-          invoices: cascade.invoices,
-          payments: cascade.payments,
-          admissions: cascade.admissions,
-        },
+        uhid: existing.uhid,
+        freedBeds: archived.freedBeds,
+        dischargedAdmissions: archived.dischargedAdmissions,
       },
     });
 
     await notify({
       hospitalId: session.user.hospitalId,
-      title: "Patient deleted",
-      message: `${existing.firstName} ${existing.lastName} (${existing.uhid}) and related records were removed`,
+      title: "Patient archived",
+      message: `${existing.firstName} ${existing.lastName} (${existing.uhid}) archived — history kept`,
       type: "patient",
-      href: "/patients",
+      href: "/records",
       targetRoles: ["RECEPTIONIST", "ACCOUNTANT", "DOCTOR"],
       actorId: session.user.id,
     });
 
-    return jsonOk({ ok: true, cascade });
+    return jsonOk({ ok: true, archived });
   } catch (error) {
     return jsonError(error);
   }

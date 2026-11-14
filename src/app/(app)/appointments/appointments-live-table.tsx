@@ -28,11 +28,13 @@ export function AppointmentsLiveTable({
   date,
   status,
   canDelete,
+  history = false,
 }: {
   initialRows: AppointmentRow[];
   date: string;
   status?: string;
   canDelete: boolean;
+  history?: boolean;
 }) {
   const [rows, setRows] = useState(initialRows);
 
@@ -41,7 +43,9 @@ export function AppointmentsLiveTable({
   }, [initialRows]);
 
   const reload = useCallback(async () => {
-    const params = new URLSearchParams({ limit: "100", date });
+    const params = new URLSearchParams({ limit: history ? "100" : "100" });
+    if (history) params.set("view", "history");
+    else if (date) params.set("date", date);
     if (status) params.set("status", status);
     const res = await fetch(`/api/appointments?${params.toString()}`, {
       cache: "no-store",
@@ -55,7 +59,7 @@ export function AppointmentsLiveTable({
         _id: String(a._id),
       }))
     );
-  }, [date, status]);
+  }, [date, status, history]);
 
   useLiveReload(reload);
 

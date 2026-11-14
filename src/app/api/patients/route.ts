@@ -10,10 +10,13 @@ export async function GET(req: Request) {
     const { page, limit, skip } = parsePagination(searchParams);
     const q = searchParams.get("q")?.trim();
 
+    const status = searchParams.get("status") || "active";
     const filter: Record<string, unknown> = {
       hospitalId: session.user.hospitalId,
-      isActive: true,
     };
+    if (status === "active") filter.isActive = true;
+    else if (status === "archived") filter.isActive = false;
+    // status=all → no isActive filter
 
     if (q) {
       filter.$or = [

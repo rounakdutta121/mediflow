@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { connectDB } from "@/lib/db";
 import { Appointment } from "@/models";
 import { PageHeader } from "@/components/page-header";
@@ -10,22 +11,32 @@ import { AppointmentsLiveTable } from "./appointments-live-table";
 export default async function AppointmentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string; status?: string }>;
+  searchParams: Promise<{ date?: string; status?: string; view?: string }>;
 }) {
   const session = await requirePagePermission("appointments:read");
-  const { date, status } = await searchParams;
+  const { date, status, view } = await searchParams;
   await connectDB();
 
+  const historyView = view === "history";
   const selectedDate = date || new Date().toISOString().slice(0, 10);
-  const start = new Date(selectedDate);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(selectedDate);
-  end.setHours(23, 59, 59, 999);
 
   const filter: Record<string, unknown> = {
     hospitalId: session.user.hospitalId,
-    scheduledAt: { $gte: start, $lte: end },
   };
+
+  if (historyView) {
+    const start = new Date();
+    start.setDate(start.getDate() - 90);
+    start.setHours(0, 0, 0, 0);
+    filter.scheduledAt = { $gte: start };
+  } else {
+    const start = new Date(selectedDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(selectedDate);
+    end.setHours(23, 59, 59, 999);
+    filter.scheduledAt = { $gte: start, $lte: end };
+  }
+
   if (status) filter.status = status;
   if (session.user.role === "DOCTOR") filter.doctorId = session.user.id;
 
@@ -33,7 +44,8 @@ export default async function AppointmentsPage({
     .populate("patientId", "uhid firstName lastName phone")
     .populate("doctorId", "name")
     .populate("departmentId", "name")
-    .sort({ scheduledAt: 1 })
+    .sort({ scheduledAt: historyView ? -1 : 1 })
+    .limit(historyView ? 100 : 200)
     .lean();
 
   const canWrite = hasPermission(session.user.role as Role, "appointments:write");
@@ -70,7 +82,11 @@ export default async function AppointmentsPage({
     <div>
       <PageHeader
         title="Appointments"
-        description="Book, manage and track OPD appointments"
+        description={
+          historyView
+            ? "Last 90 days of appointment history"
+            : "Book, manage and track OPD appointments"
+        }
         action={
           canWrite
             ? { href: "/appointments/new", label: "Book appointment" }
@@ -79,14 +95,16 @@ export default async function AppointmentsPage({
       />
 
       <Card className="mb-4">
-        <CardContent className="flex flex-wrap gap-2 p-4">
+        <CardContent className="flex flex-wrap items-center gap-2 p-4">
           <form className="flex flex-wrap gap-2">
-            <input
-              type="date"
-              name="date"
-              defaultValue={selectedDate}
-              className="h-10 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--foreground)]"
-            />
+            {!historyView && (
+              <input
+                type="date"
+                name="date"
+                defaultValue={selectedDate}
+                className="h-10 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--foreground)]"
+              />
+            )}
             <select
               name="status"
               defaultValue={status || ""}
@@ -100,10 +118,22 @@ export default async function AppointmentsPage({
               <option value="cancelled">Cancelled</option>
               <option value="no_show">No show</option>
             </select>
+            {historyView && <input type="hidden" name="view" value="history" />}
             <Button type="submit" variant="outline">
               Filter
             </Button>
           </form>
+          <div className="ml-auto flex flex-wrap gap-2">
+            <Button asChild size="sm" variant={historyView ? "outline" : "default"}>
+              <Link href="/appointments">Today / by date</Link>
+            </Button>
+            <Button asChild size="sm" variant={historyView ? "default" : "outline"}>
+              <Link href="/appointments?view=history">90-day history</Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/records?tab=appointments">Full records</Link>
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -111,9 +141,10 @@ export default async function AppointmentsPage({
         <CardContent className="p-0">
           <AppointmentsLiveTable
             initialRows={initialRows}
-            date={selectedDate}
+            date={historyView ? "" : selectedDate}
             status={status}
             canDelete={canDelete}
+            history={historyView}
           />
         </CardContent>
       </Card>

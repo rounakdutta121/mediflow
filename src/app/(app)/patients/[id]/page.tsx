@@ -59,8 +59,8 @@ export default async function PatientDetailPage({
           {canWrite && (
             <DeleteButton
               endpoint={`/api/patients/${id}`}
-              label="Delete patient"
-              confirmMessage="Permanently delete this patient and all related appointments, queue tokens, encounters, prescriptions, invoices, payments, and admissions?"
+              label="Archive patient"
+              confirmMessage="Archive this patient? Appointments, invoices, and admissions history are kept. Active IPD stays will be discharged and beds freed."
               redirectTo="/patients"
               variant="danger"
             />

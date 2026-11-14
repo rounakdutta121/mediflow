@@ -41,6 +41,8 @@ export async function bumpLive(
       revalidatePath("/staff");
       revalidatePath("/departments");
       revalidatePath("/admissions");
+      revalidatePath("/admissions/beds");
+      revalidatePath("/records");
     } catch {
       // revalidatePath can throw outside a request context; bump still counts.
     }

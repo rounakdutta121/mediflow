@@ -17,6 +17,7 @@ export default async function AdmissionsPage() {
 
   const hospitalId = session.user.hospitalId;
   const canWrite = hasPermission(session.user.role as Role, "admission:write");
+  const canManageBeds = hasPermission(session.user.role as Role, "beds:manage");
 
   const [wards, beds, admissions] = await Promise.all([
     Ward.find({ hospitalId, isActive: true }).sort({ name: 1 }).lean(),
@@ -111,15 +112,24 @@ export default async function AdmissionsPage() {
 
   return (
     <div>
-      <PageHeader
-        title="Admission & Beds"
-        description="IPD bed board, active admissions, transfer and discharge"
-        action={
-          canWrite
-            ? { href: "/admissions/new", label: "Admit patient" }
-            : undefined
-        }
-      />
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <PageHeader
+          title="Admission & Beds"
+          description="IPD bed board, active admissions, transfer and discharge"
+        />
+        <div className="flex flex-wrap gap-2">
+          {canManageBeds && (
+            <Button asChild variant="outline" size="sm">
+              <Link href="/admissions/beds">Manage wards & beds</Link>
+            </Button>
+          )}
+          {canWrite && (
+            <Button asChild size="sm">
+              <Link href="/admissions/new">Admit patient</Link>
+            </Button>
+          )}
+        </div>
+      </div>
 
       <div className="mb-4 grid gap-3 sm:grid-cols-3">
         <Card>
@@ -172,8 +182,11 @@ export default async function AdmissionsPage() {
       )}
 
       <Card className="mt-4">
-        <CardHeader>
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
           <CardTitle>Active admissions</CardTitle>
+          <Button asChild size="sm" variant="outline">
+            <Link href="/records?tab=admissions">Full admission history</Link>
+          </Button>
         </CardHeader>
         <CardContent className="p-0">
           <TableScroll className="border-0 shadow-none rounded-none">
